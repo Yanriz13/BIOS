@@ -68,15 +68,7 @@
                                 </div>
 
                                 <div class="font-semibold text-red-500 text-lg">
-                         @php
-    $activeDay = $checklist->day_name
-        ?? $routine->deadline
-        ?? '-';
-@endphp
-
-<div class="font-semibold text-red-500 text-lg">
-    {{ ucfirst($activeDay) }}
-</div>
+                                    {{ ucfirst($routine->archived_day ?? '-') }}
                                 </div>
                                 <div class="mt-3 text-sm text-slate-500">
                                     Total Checklist :

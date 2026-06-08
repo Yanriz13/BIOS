@@ -45,7 +45,7 @@
             <div class="flex items-center gap-3">
                 <input id="searchRoutine" type="search" placeholder="Cari routine..."
                     class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-violet-500 focus:bg-white focus:outline-none w-48">
-                @if(auth()->user()->role === 'manager')
+                @if(in_array(auth()->user()->role, ['manager', 'supervisor']))
                     <button onclick="showDailyRoutineForm()"
                         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition whitespace-nowrap shadow-lg shadow-violet-100">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -703,10 +703,10 @@ $overdue = strtolower($routine->deadline) === $today
                     <div class="text-5xl mb-4">🔁</div>
                     <p class="font-black text-slate-700 text-lg">Belum ada Daily Routine</p>
                     <p class="text-sm text-slate-400 mt-1 mb-5">
-                        @if(auth()->user()->role === 'manager') Buat routine pertama untuk tim kamu.
+                        @if(in_array(auth()->user()->role, ['manager', 'supervisor'])) Buat routine pertama untuk tim kamu.
                         @else Manager belum membuat routine untukmu. @endif
                     </p>
-                    @if(auth()->user()->role === 'manager')
+                    @if(in_array(auth()->user()->role, ['manager', 'supervisor']))
                         <button onclick="showDailyRoutineForm()"
                             class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition">
                             + Create Routine
@@ -721,7 +721,7 @@ $overdue = strtolower($routine->deadline) === $today
     {{-- ══════════════════════════════════════════════════════
     MODAL: Create Daily Routine (Manager only)
     ══════════════════════════════════════════════════════ --}}
-    @if(auth()->user()->role === 'manager')
+    @if(in_array(auth()->user()->role, ['manager', 'supervisor']))
         <div id="dailyRoutineModalWrapper" onclick="hideDailyRoutineForm()"
             class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
             <div onclick="event.stopPropagation()"

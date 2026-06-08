@@ -103,6 +103,11 @@
                             Manager
                         </option>
 
+                        <option value="supervisor"
+                            {{ $user->role == 'supervisor' ? 'selected' : '' }}>
+                            Supervisor
+                        </option>
+
                         <option value="staff"
                             {{ $user->role == 'staff' ? 'selected' : '' }}>
                             Staff
@@ -120,30 +125,16 @@
                     </label>
 
                     <select
-                        name="divisi"
+                        name="divisi_id"
                         class="w-full mt-2 border border-slate-300 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     >
-
-                        <option value="IT"
-                            {{ $user->divisi == 'IT' ? 'selected' : '' }}>
-                            IT
-                        </option>
-
-                        <option value="HRD"
-                            {{ $user->divisi == 'HRD' ? 'selected' : '' }}>
-                            HRD
-                        </option>
-
-                        <option value="Finance"
-                            {{ $user->divisi == 'Finance' ? 'selected' : '' }}>
-                            Finance
-                        </option>
-
-                        <option value="Purchasing"
-                            {{ $user->divisi == 'Purchasing' ? 'selected' : '' }}>
-                            Purchasing
-                        </option>
-
+                        <option value="">-- Pilih Divisi --</option>
+                        @foreach($divisis as $div)
+                            <option value="{{ $div->id }}"
+                                {{ old('divisi_id', $user->divisi_id) == $div->id ? 'selected' : '' }}>
+                                {{ $div->nama }}{{ $div->kode ? ' ('.$div->kode.')' : '' }}
+                            </option>
+                        @endforeach
                     </select>
 
                 </div>

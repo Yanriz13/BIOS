@@ -74,18 +74,9 @@
                                                     </div>
 
                                                     <div class="font-bold text-red-500 text-sm sm:text-base">
-                                                         @php
-    $today = strtolower(now()->locale('id')->translatedFormat('l'));
-
-    $days = collect(explode(',', strtolower($routine->deadline)))
-        ->map(fn($d) => trim($d));
-
-    $activeDay = $days->first(fn($d) => $d === $today);
-@endphp
-
-<div class="font-semibold text-red-500 text-lg">
-    {{ $activeDay ? ucfirst($activeDay) : '-' }}
-</div>
+                                                        <div class="font-semibold text-red-500 text-lg">
+                                                            {{ ucfirst($routine->archived_day ?? '-') }}
+                                                        </div>
                                                     </div>
 
                                                 </div>

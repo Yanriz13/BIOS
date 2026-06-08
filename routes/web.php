@@ -7,6 +7,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DailyRoutineController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\SuperAdmin\DivisiController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -27,7 +28,6 @@ Route::middleware(['auth', 'role:super_admin'])
 
     });
 
-
 // =============================
 // DIREKSI & MANAGER
 // =============================
@@ -36,6 +36,15 @@ Route::middleware(['auth', 'role:manager,direksi'])
 
         Route::get('/manager/dashboard', [HomeController::class, 'index'])
             ->name('manager.dashboard');
+
+        Route::get('/manager/management-tim', [HomeController::class, 'managementTeam'])
+            ->name('manager.management.team');
+
+        Route::post('/manager/management-tim/assign', [HomeController::class, 'assignSupervisor'])
+            ->name('manager.management.team.assign');
+
+        Route::post('/manager/management-tim/assign-multiple', [HomeController::class, 'assignMultipleToSupervisor'])
+            ->name('manager.management.team.assign-multiple');
 
     });
 
@@ -53,6 +62,21 @@ Route::middleware(['auth', 'role:staff'])
 
 
 // =============================
+// SUPERVISOR
+// =============================
+Route::middleware(['auth', 'role:supervisor'])
+    ->group(function () {
+
+        Route::get('/supervisor/dashboard', [HomeController::class, 'index'])
+            ->name('supervisor.dashboard');
+
+        Route::get('/supervisor/project', [ProjectController::class, 'supervisorProject'])
+            ->name('supervisor.project.index');
+
+    });
+
+
+// =============================
 // SUPER ADMIN USER MANAGEMENT
 // =============================
 Route::middleware(['auth', 'role:super_admin'])
@@ -61,7 +85,7 @@ Route::middleware(['auth', 'role:super_admin'])
     ->group(function () {
 
         Route::resource('users', UserManagementController::class);
-
+    Route::resource('divisi', DivisiController::class);
     });
 
 
@@ -128,7 +152,7 @@ Route::middleware(['auth', 'role:manager'])
 // ======================================================
 // STAFF PROJECT
 // ======================================================
-Route::middleware(['auth', 'role:staff'])
+Route::middleware(['auth', 'role:staff,supervisor'])
     ->group(function () {
 
         Route::get('/staff/project', [ProjectController::class, 'staffProject'])
@@ -174,7 +198,7 @@ Route::middleware(['auth'])->group(function () {
 // ======================================================
 Route::prefix('project/daily-routine')
     ->name('daily-routine.')
-    ->middleware(['auth', 'role:manager,direksi,staff'])
+    ->middleware(['auth', 'role:manager,direksi,supervisor,staff'])
     ->group(function () {
 
         Route::get('/', [DailyRoutineController::class, 'index'])
@@ -191,7 +215,7 @@ Route::prefix('project/daily-routine')
 // ======================================================
 Route::prefix('project/daily-routine')
     ->name('daily-routine.')
-    ->middleware(['auth', 'role:manager'])
+    ->middleware(['auth', 'role:manager,supervisor'])
     ->group(function () {
 
         Route::post('/', [DailyRoutineController::class, 'store'])
@@ -220,7 +244,7 @@ Route::prefix('project/daily-routine')
 // ======================================================
 Route::prefix('project/daily-routine')
     ->name('daily-routine.')
-    ->middleware(['auth', 'role:staff'])
+    ->middleware(['auth', 'role:staff,supervisor'])
     ->group(function () {
 
         Route::patch('checklist/{checklistId}/toggle', [DailyRoutineController::class, 'checklistToggle'])

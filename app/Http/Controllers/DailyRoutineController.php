@@ -69,6 +69,42 @@ public function index(): View
 
     /*
     |--------------------------------------------------------------------------
+    | SUPERVISOR
+    |--------------------------------------------------------------------------
+    */
+
+    if (auth()->user()->role === 'supervisor') {
+        $members = User::where('role', 'staff')
+            ->where('supervisor_id', auth()->id())
+            ->get();
+
+        $allRoutines = DailyRoutine::with(['user', 'checklists', 'task'])
+            ->whereHas('user', function ($q) {
+                $q->where('supervisor_id', auth()->id());
+            })
+            ->latest()
+            ->get()
+            ->filter(function ($routine) use ($today) {
+                if (!$routine->deadline) return false;
+                $days = collect(explode(',', strtolower($routine->deadline)))
+                    ->map(fn($day) => trim($day))->toArray();
+                return in_array($today, $days);
+            });
+
+        // Group routines keyed by user_id
+        $routinesByUser = $allRoutines->groupBy('user_id');
+
+        $tasks = Task::all();
+
+        return view('supervisor.daily-routine', compact(
+            'routinesByUser',
+            'members',
+            'tasks'
+        ));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | MANAGER / ADMIN
     |--------------------------------------------------------------------------
     */
@@ -422,7 +458,6 @@ $today = $mapDays[now()->format('l')];
     public function history(): View
     {
         if (auth()->user()->role === 'staff') {
-
             $routines = DailyRoutineHistory::with([
                 'checklists',
                 'user'
@@ -434,7 +469,20 @@ $today = $mapDays[now()->format('l')];
             return view('staff.project.history', compact('routines'));
         }
 
-        // ✅ hanya history divisi yang sama
+        if (auth()->user()->role === 'supervisor') {
+            $routines = DailyRoutineHistory::with([
+                'checklists',
+                'user'
+            ])
+                ->whereHas('user', function ($q) {
+                    $q->where('supervisor_id', auth()->id());
+                })
+                ->latest()
+                ->get();
+
+            return view('daily-routine.history', compact('routines'));
+        }
+
         $routines = DailyRoutineHistory::with([
             'checklists',
             'user'

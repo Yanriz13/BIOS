@@ -37,6 +37,17 @@ class LoginController extends Controller
         }
 
         // =========================
+        // SUPERVISOR
+        // =========================
+        if ($user->role == 'supervisor') {
+
+            return redirect()->route(
+                'supervisor.project.index'
+            );
+
+        }
+
+        // =========================
         // STAFF
         // =========================
         if ($user->role == 'staff') {

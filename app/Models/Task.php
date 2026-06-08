@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\TaskAssignment;
 
 class Task extends Model
 {
@@ -19,6 +20,11 @@ class Task extends Model
     public function users()
     {
         return $this->belongsToMany(User::class);
+    }
+
+    public function assignments()
+    {
+        return $this->hasMany(TaskAssignment::class);
     }
 
     public function todoItems()

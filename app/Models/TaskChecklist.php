@@ -15,6 +15,9 @@ class TaskChecklist extends Model
         'file_name',
         'file_type',
         'uncheck_reason',
+        'latitude',   // ← tambah
+        'longitude',  // ← tambah
+        'address',
     ];
 
     public function assignment()

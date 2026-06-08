@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+
+use App\Models\Divisi;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,7 +17,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'divisi'
+        'divisi',
+          'divisi_id',
+        'supervisor_id',
     ];
 
     protected $hidden = [
@@ -35,6 +39,16 @@ class User extends Authenticatable
         return $this->belongsToMany(Task::class);
     }
 
+    public function supervisor()
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    public function subordinates()
+    {
+        return $this->hasMany(User::class, 'supervisor_id');
+    }
+
     public function messagesSent()
     {
         return $this->hasMany(ChatMessage::class, 'from_user_id');
@@ -48,5 +62,9 @@ class User extends Authenticatable
     public function chatNotifications()
     {
         return $this->hasMany(ChatNotification::class);
+    }
+    public function divisiRelasi()
+    {
+        return $this->belongsTo(Divisi::class, 'divisi_id');
     }
 }

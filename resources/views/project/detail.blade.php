@@ -77,6 +77,10 @@
                     class="tab-button px-4 py-2 rounded-2xl bg-indigo-600 text-white font-semibold shadow-sm">
                     Overview
                 </button>
+                <button type="button" onclick="switchTab('supervisor')" id="tab-button-supervisor"
+                    class="tab-button px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">
+                    Team
+                </button>
                 @unless(auth()->user()->role == 'direksi')
                     <button type="button" onclick="switchTab('addtask')" id="tab-button-addtask"
                         class="tab-button px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">
@@ -87,12 +91,13 @@
                     class="tab-button px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">
                     Assignments
                 </button>
+
             </div>
         </div>
 
         <div id="tab-overview" class="tab-content mt-6">
             {{-- INFO --}}
-            <div class="grid sm:grid-cols-3 gap-4">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
                 <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-start gap-4">
                     <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
@@ -136,22 +141,24 @@
                     </div>
                 </div>
 
+
+
             </div>
 
 
             {{-- TABLE FOR DRAFTS --}}
+            {{-- TABLE FOR DRAFTS --}}
             <div class="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm mt-6">
+
+                {{-- Header --}}
                 <div
-                    class="flex flex-col gap-4 px-6 py-5 border-b border-slate-200 sm:flex-row sm:items-center sm:justify-between bg-slate-50/50">
+                    class="flex flex-col gap-4 px-8 py-6 border-b border-slate-200 sm:flex-row sm:items-center sm:justify-between bg-slate-50/50">
                     <div>
                         <h2 class="text-2xl font-black text-slate-800">Task Drafts</h2>
                         <p class="text-sm text-slate-500 mt-1">Semua draft task beserta status assignment.</p>
                     </div>
                     <div
-                        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 
-                                                                                                                                                                    bg-white border border-slate-200 rounded-3xl p-4 shadow-sm">
-
-                        {{-- Total Draft --}}
+                        class="flex flex-col sm:flex-row sm:items-center gap-4 bg-white border border-slate-200 rounded-3xl px-5 py-4 shadow-sm">
                         <div class="flex items-center gap-3">
                             <div class="w-11 h-11 flex items-center justify-center rounded-2xl bg-indigo-100">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none"
@@ -160,33 +167,18 @@
                                         d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
                                 </svg>
                             </div>
-
                             <div>
-                                <p class="text-xs uppercase tracking-wide text-slate-400 font-semibold">
-                                    Total Draft
-                                </p>
-
-                                <h3 class="text-lg font-bold text-slate-800">
-                                    {{ $allDrafts->count() }} Drafts
-                                </h3>
+                                <p class="text-xs uppercase tracking-wide text-slate-400 font-semibold">Total Draft</p>
+                                <h3 class="text-lg font-bold text-slate-800">{{ $allDrafts->count() }} Drafts</h3>
                             </div>
                         </div>
-
-                        {{-- Button --}}
                         @unless(auth()->user()->role == 'direksi')
                             <button type="button" onclick="showTaskAssignForm()"
-                                class="inline-flex items-center justify-center gap-2 
-                                                                                                                                                                                                               px-5 py-3 rounded-2xl 
-                                                                                                                                                                                                               bg-indigo-600 hover:bg-indigo-700 
-                                                                                                                                                                                                               text-white text-sm font-semibold 
-                                                                                                                                                                                                               transition-all duration-200 
-                                                                                                                                                                                                               shadow-lg shadow-indigo-100 hover:scale-[1.02]">
-
+                                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-indigo-100 hover:scale-[1.02]">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                 </svg>
-
                                 Create Task Draft
                             </button>
                         @endunless
@@ -197,59 +189,106 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600">
-                                    <th class="p-6 text-sm font-semibold">Description</th>
-                                    <th class="p-6 text-sm font-semibold">Deadline</th>
-                                    <th class="p-6 text-sm font-semibold">Notes</th>
-                                    <th class="p-6 text-sm font-semibold">Status</th>
-                                    <th class="p-6 text-sm font-semibold text-right">Actions</th>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th class="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Description
+                                    </th>
+                                    <th class="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Deadline
+                                    </th>
+                                    <th class="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Notes</th>
+                                    <th class="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                                        Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($allDrafts as $draft)
-                                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition cursor-pointer"
+                                    <tr class="border-b border-slate-100 hover:bg-slate-50/70 transition cursor-pointer"
                                         onclick="toggleDraftChecklist({{ $draft->id }})">
-                                        <td class="p-6">
-                                            <p class="font-bold text-slate-800 text-base">
+
+                                        {{-- Description --}}
+                                        <td class="px-8 py-6">
+                                            <p class="font-bold text-slate-800 text-sm leading-relaxed">
                                                 {{ $draft->description ?: 'No Description' }}
                                             </p>
                                         </td>
-                                        <td class="p-6">
-                                            <span
-                                                class="px-3 py-1.5 bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 border border-slate-200">
-                                                {{ $draft->deadline ? \Carbon\Carbon::parse($draft->deadline)->format('d M Y') : 'No deadline' }}
-                                            </span>
+
+                                        {{-- Deadline --}}
+                                        <td class="px-8 py-6">
+                                            @if($draft->deadline)
+                                                @php
+                                                    $deadline = \Carbon\Carbon::parse($draft->deadline);
+                                                    $now = now();
+                                                    $diffSeconds = $now->diffInSeconds($deadline, false);
+                                                    $isExpired = $diffSeconds < 0;
+                                                    $diffSeconds = abs($diffSeconds);
+                                                    $days = floor($diffSeconds / 86400);
+                                                    $hours = floor(($diffSeconds % 86400) / 3600);
+                                                    $minutes = floor(($diffSeconds % 3600) / 60);
+                                                @endphp
+                                                <div class="flex flex-col gap-2">
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border w-fit
+                                                            {{ $isExpired ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-100 text-slate-600 border-slate-200' }}">
+                                                        📅 {{ $deadline->format('d M Y H:i') }}
+                                                    </span>
+                                                    @if($isExpired)
+                                                        <span
+                                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-100 text-red-700 border border-red-200 text-xs font-bold w-fit">
+                                                            ⛔ Deadline Terlewat
+                                                        </span>
+                                                    @else
+                                                        <span
+                                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold w-fit">
+                                                            ⏳ {{ $days }}h {{ $hours }}j {{ $minutes }}m lagi
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <span
+                                                    class="px-3 py-1.5 bg-slate-100 rounded-xl text-xs font-semibold text-slate-500 border border-slate-200">
+                                                    No Deadline
+                                                </span>
+                                            @endif
                                         </td>
-                                        <td class="p-6 text-slate-600 text-sm max-w-xs truncate">
-                                            {{ $draft->notes ?: '-' }}
+
+                                        {{-- Notes --}}
+                                        <td class="px-8 py-6">
+                                            <p class="text-sm text-slate-500 max-w-[200px] truncate">
+                                                {{ $draft->notes ?: '—' }}
+                                            </p>
                                         </td>
-                                        <td class="p-6">
+
+                                        {{-- Status --}}
+                                        <td class="px-8 py-6">
                                             @if($draft->user_id)
-                                                <div class="flex items-center gap-2">
+                                                <div class="flex items-center gap-2.5">
                                                     <img src="https://i.pravatar.cc/100?u={{ $draft->user_id }}"
-                                                        class="w-7 h-7 rounded-full border border-slate-200">
+                                                        class="w-8 h-8 rounded-xl border border-slate-200 shrink-0">
                                                     <div>
-                                                        <p class="text-xs font-semibold text-slate-700">{{ $draft->user->name ?? '-' }}
-                                                        </p>
-                                                        <p class="text-xs text-emerald-600 font-medium">Assigned</p>
+                                                        <p class="text-xs font-semibold text-slate-700 leading-tight">
+                                                            {{ $draft->user->name ?? '-' }}</p>
+                                                        <p class="text-[11px] text-emerald-600 font-medium mt-0.5">Assigned</p>
                                                     </div>
                                                 </div>
                                             @else
                                                 <span
-                                                    class="px-3 py-1.5 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-xl text-xs font-semibold">
-                                                    Unassigned Draft
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-xl text-xs font-semibold">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                                                    Unassigned
                                                 </span>
                                             @endif
                                         </td>
-                                        <td class="p-6 text-right">
+
+                                        {{-- Actions --}}
+                                        <td class="px-8 py-6 text-right">
                                             <div class="flex items-center justify-end gap-2" onclick="event.stopPropagation()">
                                                 <button type="button"
-                                                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-semibold text-sm transition">
+                                                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-xs transition">
                                                     Checklist ({{ $draft->checklists->count() }})
                                                 </button>
                                                 @if(auth()->user()->role != 'direksi')
                                                     <button type="button" onclick="deleteDraft({{ $draft->id }})"
-                                                        class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-2xl font-semibold text-sm transition">
+                                                        class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-semibold text-xs transition">
                                                         🗑 Hapus
                                                     </button>
                                                 @endif
@@ -258,188 +297,134 @@
                                     </tr>
 
                                     {{-- DROPDOWN CHECKLIST ROW --}}
-                                    <tr id="draft-checklist-{{ $draft->id }}" class="hidden bg-slate-50/30">
-                                        <td colspan="5" class="p-6 border-b border-slate-100">
-                                            <div class="overflow-x-auto rounded-2xl border border-slate-200">
+                                    <tr id="draft-checklist-{{ $draft->id }}" class="hidden bg-slate-50/40">
+                                        <td colspan="5" class="px-8 py-6 border-b border-slate-100">
+                                            <div class="rounded-2xl border border-slate-200 overflow-hidden">
                                                 <table class="min-w-full text-sm">
-                                                    <thead class="bg-slate-100 text-slate-700">
+                                                    <thead class="bg-slate-100">
                                                         <tr>
-                                                            <th class="px-4 py-3 text-left font-bold">Nama Checklist</th>
-                                                            <th class="px-4 py-3 text-left font-bold">File Bukti</th>
-                                                            <th class="px-4 py-3 text-center font-bold">Action</th>
+                                                            <th
+                                                                class="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                                                Nama Checklist</th>
+                                                            <th
+                                                                class="px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                                                File Bukti</th>
+                                                            <th
+                                                                class="px-6 py-4 text-center text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                                                Action</th>
                                                         </tr>
                                                     </thead>
-
                                                     <tbody class="divide-y divide-slate-100 bg-white">
                                                         @foreach($draft->checklists as $checklist)
                                                             <tr class="hover:bg-slate-50 transition">
 
-                                                                {{-- Nama checklist --}}
-                                                                <td class="px-4 py-4">
-                                                                    <div class="flex items-start ">
-
-
-                                                                        <div>
-                                                                            <div class="font-semibold text-slate-800 text-sm">
-                                                                                {{ $checklist->title }}
-                                                                            </div>
-
-
-                                                                        </div>
-                                                                    </div>
+                                                                {{-- Nama --}}
+                                                                <td class="px-6 py-5">
+                                                                    <p class="font-semibold text-slate-800 text-sm">
+                                                                        {{ $checklist->title }}</p>
                                                                 </td>
 
-                                                                {{-- File bukti --}}
-                                                                <td class="px-4 py-4 align-top">
+                                                                {{-- File --}}
+                                                                <td class="px-6 py-5">
                                                                     @if($checklist->file_path)
-
                                                                         @if(str_starts_with($checklist->file_type ?? '', 'image/'))
                                                                             <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
-                                                                                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition">
-
+                                                                                class="inline-flex items-center gap-2.5 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition">
                                                                                 <img src="{{ Storage::url($checklist->file_path) }}"
-                                                                                    class="w-10 h-10 rounded-lg object-cover border border-slate-200">
-
-                                                                                <div class="flex flex-col">
-                                                                                    <span class="text-xs font-semibold text-slate-700">
-                                                                                        Lihat Gambar
-                                                                                    </span>
-
-                                                                                    <span class="text-[11px] text-slate-400">
+                                                                                    class="w-9 h-9 rounded-lg object-cover border border-slate-200">
+                                                                                <div>
+                                                                                    <p class="text-xs font-semibold text-slate-700">Lihat Gambar
+                                                                                    </p>
+                                                                                    <p class="text-[11px] text-slate-400">
                                                                                         {{ Str::limit($checklist->file_name ?? 'image', 18) }}
-                                                                                    </span>
+                                                                                    </p>
                                                                                 </div>
                                                                             </a>
                                                                         @else
                                                                             <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
-                                                                                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 transition">
-
+                                                                                class="inline-flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 hover:bg-slate-200 transition">
                                                                                 <span class="text-base">
-                                                                                    @if($checklist->file_type === 'application/pdf')
-                                                                                        📄
+                                                                                    @if($checklist->file_type === 'application/pdf') 📄
                                                                                     @elseif(str_contains($checklist->file_type ?? '', 'sheet'))
                                                                                         📊
-                                                                                    @else
-                                                                                        📎
+                                                                                    @else 📎
                                                                                     @endif
                                                                                 </span>
-
-                                                                                <div class="flex flex-col">
-                                                                                    <span class="text-xs font-semibold text-slate-700">
-                                                                                        Lihat File
-                                                                                    </span>
-
-                                                                                    <span class="text-[11px] text-slate-400">
+                                                                                <div>
+                                                                                    <p class="text-xs font-semibold text-slate-700">Lihat File
+                                                                                    </p>
+                                                                                    <p class="text-[11px] text-slate-400">
                                                                                         {{ Str::limit($checklist->file_name ?? 'file', 18) }}
-                                                                                    </span>
+                                                                                    </p>
                                                                                 </div>
                                                                             </a>
                                                                         @endif
-
                                                                     @else
                                                                         <span
-                                                                            class="inline-flex items-center px-3 py-1 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium">
+                                                                            class="inline-flex items-center px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 text-xs font-medium">
                                                                             ⚠ Belum ada file
                                                                         </span>
                                                                     @endif
                                                                 </td>
 
-                                                                {{-- Assign --}}
-
                                                                 {{-- Action --}}
-                                                                {{-- Action --}}
-                                                                <td class="px-4 py-4 align-top">
-
+                                                                <td class="px-6 py-5">
                                                                     <div class="flex items-center justify-center gap-2">
 
-                                                                        {{-- Assign --}}
+                                                                        {{-- Assign button --}}
                                                                         @if(!$checklist->assignment || !$checklist->assignment->user_id)
-
                                                                             @if(!$checklist->assigned_user_id)
-
                                                                                 <div class="relative group">
                                                                                     @unless(auth()->user()->role == 'direksi')
                                                                                         <button type="button"
-                                                                                            onclick="openAssignChecklistModal(
-                                                                                                                                                                                                                                                                                                                                                                                    {{ $checklist->id }},
-                                                                                                                                                                                                                                                                                                                                                                                    '{{ addslashes($checklist->title) }}',
-                                                                                                                                                                                                                                                                                                                                                                                    '{{ $draft->deadline ?? '' }}',
-                                                                                                                                                                                                                                                                                                                                                                                    '{{ addslashes($draft->description ?? '') }}',
-                                                                                                                                                                                                                                                                                                                                                                                    '{{ addslashes($draft->notes ?? '') }}'
-                                                                                                                                                                                                                                                                                                                                                                                )"
+                                                                                            onclick="openAssignChecklistModal({{ $checklist->id }}, '{{ addslashes($checklist->title) }}', '{{ $draft->deadline ?? '' }}', '{{ addslashes($draft->description ?? '') }}', '{{ addslashes($draft->notes ?? '') }}')"
                                                                                             class="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white transition">
-
-                                                                                            {{-- user plus --}}
                                                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                                                 viewBox="0 0 24 24" stroke-width="1.8"
                                                                                                 stroke="currentColor" class="h-5 w-5">
                                                                                                 <path stroke-linecap="round" stroke-linejoin="round"
                                                                                                     d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
                                                                                             </svg>
-
                                                                                         </button>
                                                                                     @endunless
-
-                                                                                    {{-- Tooltip --}}
                                                                                     <div
                                                                                         class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
                                                                                         Assign Checklist
                                                                                     </div>
-
                                                                                 </div>
-
                                                                             @else
-
                                                                                 <div class="relative group">
-
                                                                                     <div
                                                                                         class="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-600">
-
-                                                                                        {{-- check --}}
                                                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                                             viewBox="0 0 24 24" stroke-width="2"
                                                                                             stroke="currentColor" class="h-5 w-5">
                                                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                                                 d="M4.5 12.75l6 6 9-13.5" />
                                                                                         </svg>
-
                                                                                     </div>
-
-                                                                                    {{-- Tooltip --}}
                                                                                     <div
                                                                                         class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-emerald-600 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
                                                                                         Sudah Assigned
                                                                                     </div>
-
                                                                                 </div>
-
                                                                             @endif
-
                                                                         @else
-
                                                                             <div class="relative group">
-
                                                                                 <div
                                                                                     class="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-600">
-
-                                                                                    {{-- check --}}
                                                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                                         viewBox="0 0 24 24" stroke-width="2"
                                                                                         stroke="currentColor" class="h-5 w-5">
                                                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                                                             d="M4.5 12.75l6 6 9-13.5" />
                                                                                     </svg>
-
                                                                                 </div>
-
-                                                                                {{-- Tooltip --}}
                                                                                 <div
                                                                                     class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-emerald-600 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
                                                                                     Sudah Assigned
                                                                                 </div>
-
                                                                             </div>
-
                                                                         @endif
 
                                                                         {{-- Delete --}}
@@ -448,29 +433,22 @@
                                                                                 <button type="button"
                                                                                     onclick="deleteChecklist({{ $checklist->id }})"
                                                                                     class="flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition">
-
-                                                                                    {{-- trash --}}
                                                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                                                         viewBox="0 0 24 24" stroke-width="1.8"
                                                                                         stroke="currentColor" class="h-5 w-5">
                                                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                                                             d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0V4.5A2.25 2.25 0 0 0 13.5 2.25h-3A2.25 2.25 0 0 0 8.25 4.5v1.397" />
                                                                                     </svg>
-
                                                                                 </button>
                                                                             @endunless
-                                                                            {{-- Tooltip --}}
                                                                             <div
                                                                                 class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-red-600 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
                                                                                 Hapus Checklist
                                                                             </div>
-
                                                                         </div>
 
                                                                     </div>
-
                                                                 </td>
-
                                                             </tr>
                                                         @endforeach
                                                     </tbody>
@@ -483,15 +461,105 @@
                         </table>
                     </div>
                 @else
-                    <div class="text-center py-12 text-slate-500">
+                    <div class="text-center py-16 text-slate-500">
                         <div class="text-5xl mb-4">📑</div>
-                        <p class="font-medium text-slate-600">Belum ada task draft.</p>
-                        <p class="text-xs text-slate-400 mt-1">Gunakan tombol "Create Task Draft" di atas untuk menambahkan
+                        <p class="font-semibold text-slate-600">Belum ada task draft.</p>
+                        <p class="text-xs text-slate-400 mt-2">Gunakan tombol "Create Task Draft" di atas untuk menambahkan
                             draft.</p>
                     </div>
                 @endif
             </div>
 
+            {{-- STAFF - SUPERVISOR PANEL --}}
+            <!-- <div class="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm mt-6">
+
+                {{-- Header --}}
+                <div class="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-black text-slate-800 text-xl">Daftar Staff & Supervisor</h3>
+                        <p class="text-sm text-slate-400 mt-1">Seluruh anggota task beserta supervisor masing-masing</p>
+                    </div>
+                    <span
+                        class="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-2xl text-sm font-semibold">
+                        {{ $task->users->count() }} Staff
+                    </span>
+                </div>
+
+                @if($task->users->count())
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-100">
+                                    <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Staff</th>
+                                    <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Supervisor</th>
+                                    <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                        Status SPV</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @foreach($task->users as $user)
+                                    @php $spv = optional($user->supervisor); @endphp
+                                    <tr class="hover:bg-slate-50/70 transition">
+
+                                        {{-- Staff --}}
+                                        <td class="px-8 py-6">
+                                            <div class="flex items-center gap-3.5">
+                                                <img src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                                                    class="w-10 h-10 rounded-2xl object-cover border border-slate-200 shrink-0">
+                                                <div>
+                                                    <p class="font-semibold text-slate-800 text-sm">{{ $user->name }}</p>
+                                                    <p class="text-xs text-slate-400 mt-0.5">{{ $user->email }}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        {{-- Role --}}
+                                        {{-- Supervisor --}}
+                                        <td class="px-8 py-6">
+                                            @if($spv->name)
+                                                <div class="flex items-center gap-3">
+                                                    <img src="https://i.pravatar.cc/100?u={{ $user->supervisor->id }}"
+                                                        class="w-10 h-10 rounded-2xl object-cover border border-indigo-100 shrink-0">
+                                                    <div>
+                                                        <p class="font-semibold text-slate-800 text-sm">{{ $spv->name }}</p>
+                                                        <p class="text-xs text-slate-400 mt-0.5">{{ $spv->email ?? '-' }}</p>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <span class="text-sm text-amber-500 font-medium italic">— Belum diassign</span>
+                                            @endif
+                                        </td>
+
+                                        {{-- Status --}}
+                                        <td class="px-8 py-6">
+                                            @if($spv->name)
+                                                <span
+                                                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+                                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                    Assigned
+                                                </span>
+                                            @else
+                                                <span
+                                                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 text-xs font-semibold">
+                                                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                                                    Unassigned
+                                                </span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-16 text-slate-400">
+                        <p class="text-4xl mb-3">👥</p>
+                        <p class="text-sm font-semibold text-slate-500">Belum ada staff di task ini.</p>
+                    </div>
+                @endif
+            </div> -->
         </div>
 
         <div id="tab-addtask" class="tab-content hidden mt-6">
@@ -1067,7 +1135,19 @@
                                                                                         onclick="event.stopPropagation(); unassignChecklist({{ $c->id }}, '{{ addslashes($c->title) }}')"
                                                                                         class="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-500 hover:text-white transition">
 
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                                                                            height="24" viewBox="0 0 24 24" fill="none"
+                                                                                            stroke="currentColor" stroke-width="2"
+                                                                                            stroke-linecap="round" stroke-linejoin="round"
+                                                                                            class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                                                                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                                                            <path d="M4 7l16 0" />
+                                                                                            <path d="M10 11l0 6" />
+                                                                                            <path d="M14 11l0 6" />
+                                                                                            <path
+                                                                                                d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                                                                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                                                                        </svg>
                                                                                     </button>
 
                                                                                     {{-- Tooltip --}}
@@ -1154,7 +1234,93 @@
             </div>
         </div>
 
+<div id="tab-supervisor" class="tab-content hidden mt-6">
 
+    {{-- STAFF - SUPERVISOR PANEL --}}
+    <div class="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm">
+
+        {{-- Header --}}
+        <div class="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h3 class="font-black text-slate-800 text-xl">Daftar Staff & Supervisor</h3>
+                <p class="text-sm text-slate-400 mt-1">Seluruh anggota task beserta supervisor masing-masing</p>
+            </div>
+            <span class="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-2xl text-sm font-semibold">
+                {{ $task->users->count() }} Staff
+            </span>
+        </div>
+
+        @if($task->users->count())
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-100">
+                            <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Staff</th>
+                            <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Supervisor</th>
+                            <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status SPV</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($task->users as $user)
+                            @php $spv = optional($user->supervisor); @endphp
+                            <tr class="hover:bg-slate-50/70 transition">
+
+                                {{-- Staff --}}
+                                <td class="px-8 py-6">
+                                    <div class="flex items-center gap-3.5">
+                                        <img src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                                            class="w-10 h-10 rounded-2xl object-cover border border-slate-200 shrink-0">
+                                        <div>
+                                            <p class="font-semibold text-slate-800 text-sm">{{ $user->name }}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">{{ $user->email }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                {{-- Supervisor --}}
+                                <td class="px-8 py-6">
+                                    @if($spv->name)
+                                        <div class="flex items-center gap-3">
+                                            <img src="https://i.pravatar.cc/100?u={{ $user->supervisor->id }}"
+                                                class="w-10 h-10 rounded-2xl object-cover border border-indigo-100 shrink-0">
+                                            <div>
+                                                <p class="font-semibold text-slate-800 text-sm">{{ $spv->name }}</p>
+                                                <p class="text-xs text-slate-400 mt-0.5">{{ $spv->email ?? '-' }}</p>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <span class="text-sm text-amber-500 font-medium italic">— Belum diassign</span>
+                                    @endif
+                                </td>
+
+                                {{-- Status --}}
+                                <td class="px-8 py-6">
+                                    @if($spv->name)
+                                        <span class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                            Assigned
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 text-xs font-semibold">
+                                            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                                            Unassigned
+                                        </span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <div class="text-center py-16 text-slate-400">
+                <p class="text-4xl mb-3">👥</p>
+                <p class="text-sm font-semibold text-slate-500">Belum ada staff di task ini.</p>
+            </div>
+        @endif
+    </div>
+
+</div>
         {{-- ASSIGNMENT MODAL (HIDDEN - For modal-style popups if needed) --}}
         <div id="assignFormModalWrapper" onclick="hideAssignForm()"
             class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/50 p-4">
@@ -1428,7 +1594,7 @@
             let currentChatUserId = null;
             let currentChatRoomType = null;
             let currentChatRoomId = null;
-             let checklistIndex = 0;
+            let checklistIndex = 0;
             let currentAssignmentId = null;
             let selectedImagesPanel = [];
             let currentReply = null;
@@ -1437,7 +1603,7 @@
 
             /* ─── Tab ───────────────────────────────────────────────── */
             function switchTab(tab) {
-                ['overview', 'addtask', 'assignments'].forEach(key => {
+                ['overview', 'addtask', 'assignments', 'supervisor'].forEach(key => {
                     const s = document.getElementById('tab-' + key);
                     const b = document.getElementById('tab-button-' + key);
                     if (s) s.classList.toggle('hidden', key !== tab);
@@ -1591,11 +1757,11 @@
                 currentReply = { id: `assignment-${assignmentId}`, name: `Assignment #${assignmentId}`, text: assignmentDesc || '', type: 'assignment' };
                 const preview = document.getElementById('replyPreviewContent');
                 preview.innerHTML = `
-                                                                                                                                                                <div class="flex-1">
-                                                                                                                                                                    <div class="text-xs text-slate-500">Replying to <span class="font-semibold">${escapeHtml(currentReply.name)}</span></div>
-                                                                                                                                                                    <div class="text-sm text-slate-700 truncate">${escapeHtml(currentReply.text)}</div>
-                                                                                                                                                                </div>
-                                                                                                                                                                <button onclick="clearReply(); event.stopPropagation();" class="ml-3 text-slate-500">✕</button>`;
+                                                                                                                                                                    <div class="flex-1">
+                                                                                                                                                                        <div class="text-xs text-slate-500">Replying to <span class="font-semibold">${escapeHtml(currentReply.name)}</span></div>
+                                                                                                                                                                        <div class="text-sm text-slate-700 truncate">${escapeHtml(currentReply.text)}</div>
+                                                                                                                                                                    </div>
+                                                                                                                                                                    <button onclick="clearReply(); event.stopPropagation();" class="ml-3 text-slate-500">✕</button>`;
                 document.getElementById('replyPreviewPanel').classList.remove('hidden');
                 const input = document.getElementById('chatInputPanel');
                 input.value = `#assignment-${assignmentId} `;
@@ -1617,11 +1783,11 @@
                 document.getElementById('chatPanel').classList.add('flex');
                 const preview = document.getElementById('replyPreviewContent');
                 preview.innerHTML = `
-                                                                                                                                                                <div class="flex-1">
-                                                                                                                                                                    <div class="text-xs text-slate-500">Replying to checklist:</div>
-                                                                                                                                                                    <div class="text-sm text-slate-700 truncate">${escapeHtml(checklistTitle)}</div>
-                                                                                                                                                                </div>
-                                                                                                                                                                <button onclick="clearReply(); event.stopPropagation();" class="ml-3 text-slate-500">✕</button>`;
+                                                                                                                                                                    <div class="flex-1">
+                                                                                                                                                                        <div class="text-xs text-slate-500">Replying to checklist:</div>
+                                                                                                                                                                        <div class="text-sm text-slate-700 truncate">${escapeHtml(checklistTitle)}</div>
+                                                                                                                                                                    </div>
+                                                                                                                                                                    <button onclick="clearReply(); event.stopPropagation();" class="ml-3 text-slate-500">✕</button>`;
                 document.getElementById('replyPreviewPanel').classList.remove('hidden');
                 document.getElementById('chatInputPanel').value = '';
                 loadChatConversation('task', taskId);
@@ -1693,30 +1859,30 @@
                 document.body.style.overflow = '';
             }
 
-  
 
-function addTodolist() {
-    const container = document.getElementById('checklistContainer');
 
-    const wrapper = document.createElement('div');
-    wrapper.className = "flex items-center gap-2";
+            function addTodolist() {
+                const container = document.getElementById('checklistContainer');
 
-    wrapper.innerHTML = `
-        <input 
-            name="checklists[]" 
-            class="border border-slate-200 rounded-xl px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-200"
-            placeholder="Todolist"
-        />
+                const wrapper = document.createElement('div');
+                wrapper.className = "flex items-center gap-2";
 
-        <button type="button"
-            onclick="this.parentElement.remove()"
-            class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500 text-white hover:bg-red-600">
-            ×
-        </button>
-    `;
+                wrapper.innerHTML = `
+            <input 
+                name="checklists[]" 
+                class="border border-slate-200 rounded-xl px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                placeholder="Todolist"
+            />
 
-    container.appendChild(wrapper);
-}
+            <button type="button"
+                onclick="this.parentElement.remove()"
+                class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500 text-white hover:bg-red-600">
+                ×
+            </button>
+        `;
+
+                container.appendChild(wrapper);
+            }
 
             /* ─── Send message ───────────────────────────────────────── */
             function sendMessagePanel() {
@@ -1759,20 +1925,20 @@ function addTodolist() {
                 let replyHTML = '';
                 if (replyTo) {
                     replyHTML = `<div class="mb-2 px-3 py-2 rounded-md border-l-4 border-indigo-400 bg-white/60 text-xs text-slate-600">
-                                                                                                                                                                    <div class="font-semibold text-xs text-slate-700">${escapeHtml(replyTo.name || '')}</div>
-                                                                                                                                                                    <div class="truncate max-w-[240px]">${escapeHtml(replyTo.text)}</div></div>`;
+                                                                                                                                                                        <div class="font-semibold text-xs text-slate-700">${escapeHtml(replyTo.name || '')}</div>
+                                                                                                                                                                        <div class="truncate max-w-[240px]">${escapeHtml(replyTo.text)}</div></div>`;
                 }
                 if (isOwn) {
                     chatBody.innerHTML += `<div class="flex items-end justify-end" data-msg-id="${id}">
-                                                                                                                                                                    <div class="text-xs text-slate-400 mr-3">${timeStr}</div>
-                                                                                                                                                                    <div class="max-w-[70%]"><div class="bg-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3 shadow-sm break-words">${replyHTML}${text ? `<div class="text-sm">${text}</div>` : ''}${imagesHTML}</div></div>
-                                                                                                                                                                    <img src="${avatar}" class="w-8 h-8 rounded-full ml-3 hidden sm:block"></div>`;
+                                                                                                                                                                        <div class="text-xs text-slate-400 mr-3">${timeStr}</div>
+                                                                                                                                                                        <div class="max-w-[70%]"><div class="bg-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3 shadow-sm break-words">${replyHTML}${text ? `<div class="text-sm">${text}</div>` : ''}${imagesHTML}</div></div>
+                                                                                                                                                                        <img src="${avatar}" class="w-8 h-8 rounded-full ml-3 hidden sm:block"></div>`;
                 } else {
                     chatBody.innerHTML += `<div class="flex items-start gap-3" data-msg-id="${id}" onclick="setReplyFromDom(${id},'${addslashes(name)}','${addslashes(stripHtml(text).slice(0, 120))}')">
-                                                                                                                                                                    <img src="${avatar}" class="w-8 h-8 rounded-full">
-                                                                                                                                                                    <div class="max-w-[70%]"><div class="text-xs font-semibold text-slate-600 mb-1">${escapeHtml(name)}</div>
-                                                                                                                                                                    <div class="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm break-words">${replyHTML}${text ? `<div class="text-sm text-slate-800">${text}</div>` : ''}${imagesHTML}</div>
-                                                                                                                                                                    <div class="text-xs text-slate-400 mt-1">${timeStr}</div></div></div>`;
+                                                                                                                                                                        <img src="${avatar}" class="w-8 h-8 rounded-full">
+                                                                                                                                                                        <div class="max-w-[70%]"><div class="text-xs font-semibold text-slate-600 mb-1">${escapeHtml(name)}</div>
+                                                                                                                                                                        <div class="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm break-words">${replyHTML}${text ? `<div class="text-sm text-slate-800">${text}</div>` : ''}${imagesHTML}</div>
+                                                                                                                                                                        <div class="text-xs text-slate-400 mt-1">${timeStr}</div></div></div>`;
                 }
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
@@ -2063,15 +2229,15 @@ function addTodolist() {
 
             function addTodoField() {
                 document.getElementById('todoFieldContainer').innerHTML += `
-                                                                                                                                                                <div class="todo-item bg-white border border-slate-200 rounded-2xl p-4">
-                                                                                                                                                                    <div class="flex items-start justify-between gap-4">
-                                                                                                                                                                        <div class="flex-1 space-y-3">
-                                                                                                                                                                            <input type="text" class="todo-title w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500" placeholder="Todo title">
-                                                                                                                                                                            <textarea class="todo-description w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500" placeholder="Description"></textarea>
+                                                                                                                                                                    <div class="todo-item bg-white border border-slate-200 rounded-2xl p-4">
+                                                                                                                                                                        <div class="flex items-start justify-between gap-4">
+                                                                                                                                                                            <div class="flex-1 space-y-3">
+                                                                                                                                                                                <input type="text" class="todo-title w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500" placeholder="Todo title">
+                                                                                                                                                                                <textarea class="todo-description w-full border border-slate-200 rounded-2xl px-4 py-3 outline-none focus:border-indigo-500" placeholder="Description"></textarea>
+                                                                                                                                                                            </div>
+                                                                                                                                                                            <button type="button" onclick="removeTodoField(this)" class="w-10 h-10 rounded-2xl bg-red-100 hover:bg-red-200 text-red-600 font-bold">✕</button>
                                                                                                                                                                         </div>
-                                                                                                                                                                        <button type="button" onclick="removeTodoField(this)" class="w-10 h-10 rounded-2xl bg-red-100 hover:bg-red-200 text-red-600 font-bold">✕</button>
-                                                                                                                                                                    </div>
-                                                                                                                                                                </div>`;
+                                                                                                                                                                    </div>`;
             }
 
             function removeTodoField(button) { button.closest('.todo-item').remove(); }

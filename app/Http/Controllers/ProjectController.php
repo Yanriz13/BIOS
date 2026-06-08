@@ -109,7 +109,7 @@ class ProjectController extends Controller
     }
     public function detail($id)
     {
-        $task = Task::with(['users'])->findOrFail($id);
+        $task = Task::with(['users.supervisor'])->findOrFail($id);
 
         $assignments = TaskAssignment::with(['checklists', 'user'])
             ->where('task_id', $id)
@@ -153,6 +153,26 @@ class ProjectController extends Controller
         }
 
         return view('staff.project', compact('assignments', 'totalChecklist', 'completedChecklist'));
+    }
+
+    public function supervisorProject()
+    {
+        $supervisor = auth()->user();
+
+        $staff = User::where('supervisor_id', $supervisor->id)
+            ->get();
+
+        $staffIds = $staff->pluck('id');
+
+        $assignments = TaskAssignment::with(['task', 'checklists', 'user'])
+            ->whereIn('user_id', $staffIds)
+            ->latest()
+            ->get();
+
+        // Group assignments by user_id
+        $assignmentsByUser = $assignments->groupBy('user_id');
+
+        return view('supervisor.project', compact('staff', 'assignmentsByUser'));
     }
 
     public function toggleChecklist(Request $request, $id)
@@ -468,55 +488,61 @@ class ProjectController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Checklist berhasil diassign ke user']);
     }
-    public function uploadChecklistFile(Request $request, $id)
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp,pdf,xls,xlsx|max:10240',
-        ]);
+public function uploadChecklistFile(Request $request, $id)
+{
+    $request->validate([
+        'file'      => 'required|file|mimes:jpg,jpeg,png,gif,webp,pdf,xls,xlsx|max:10240',
+        'latitude'  => 'nullable|numeric',
+        'longitude' => 'nullable|numeric',
+        'address'   => 'nullable|string',
+    ]);
 
-        $checklist = TaskChecklist::findOrFail($id);
+    $checklist = TaskChecklist::findOrFail($id);
 
-        if ($checklist->file_path) {
-            \Storage::disk('public')->delete($checklist->file_path);
-        }
-
-        $file = $request->file('file');
-        $path = $file->store('checklist-files', 'public');
-
-        $checklist->update([
-            'file_path' => $path,
-            'file_name' => $file->getClientOriginalName(),
-            'file_type' => $file->getMimeType(),
-            'is_done' => true,
-            'uncheck_reason' => null, // ← hapus alasan ketika dicek kembali
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'File berhasil diupload dan checklist ditandai selesai.',
-        ]);
+    if ($checklist->file_path) {
+        \Storage::disk('public')->delete($checklist->file_path);
     }
 
-    public function deleteChecklistFile($id)
-    {
-        $checklist = TaskChecklist::findOrFail($id);
+    $file = $request->file('file');
+    $path = $file->store('checklist-files', 'public');
 
-        if ($checklist->file_path) {
-            \Storage::disk('public')->delete($checklist->file_path);
-        }
+    $checklist->update([
+        'file_path'      => $path,
+        'file_name'      => $file->getClientOriginalName(),
+        'file_type'      => $file->getMimeType(),
+        'is_done'        => true,
+        'uncheck_reason' => null,
+        'latitude'       => $request->latitude,
+        'longitude'      => $request->longitude,
+        'address'        => $request->address,
+    ]);
 
-        $checklist->update([
-            'file_path' => null,
-            'file_name' => null,
-            'file_type' => null,
-            'is_done' => false,
-        ]);
+    return response()->json([
+        'success' => true,
+        'message' => 'File berhasil diupload dan checklist ditandai selesai.',
+    ]);
+}
 
-        return response()->json([
-            'success' => true,
-            'message' => 'File berhasil dihapus.',
-        ]);
+public function deleteChecklistFile($id)
+{
+    $checklist = TaskChecklist::findOrFail($id);
+
+    if ($checklist->file_path) {
+        \Storage::disk('public')->delete($checklist->file_path);
     }
+
+    $checklist->update([
+        'file_path'  => null,
+        'file_name'  => null,
+        'file_type'  => null,
+        'is_done'    => false,
+        'latitude'   => null,
+        'longitude'  => null,
+        'address'    => null,
+    ]);
+
+    return response()->json(['success' => true, 'message' => 'File berhasil dihapus.']);
+}
     public function managerUncheck(Request $request, $id)
     {
         $request->validate([

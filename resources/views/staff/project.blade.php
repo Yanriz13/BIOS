@@ -61,28 +61,7 @@
                         </button>
 
                         {{-- BACK --}}
-                        <a href="{{ route('staff.dashboard') }}" class="inline-flex items-center justify-center
-                                       rounded-2xl md:rounded-3xl
-                                       bg-slate-900
-                                       px-3 md:px-5
-                                       py-2 md:py-3
-                                       text-[11px] md:text-sm
-                                       font-semibold
-                                       text-white
-                                       shadow-lg shadow-slate-200
-                                       hover:bg-slate-800
-                                       transition
-                                       whitespace-nowrap">
 
-                            <span class="hidden sm:inline">
-                                ← Back
-                            </span>
-
-                            <span class="sm:hidden">
-                                ←
-                            </span>
-
-                        </a>
 
                     </div>
 
@@ -808,7 +787,19 @@
                                 <span class="text-xs font-semibold text-slate-600">Dokumen</span>
                             </button>
                         </div>
-
+{{-- ── LOCATION STATUS ── --}}
+<div id="locationStatus" class="hidden rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3">
+    <div class="flex items-center gap-3">
+        <div id="locationIcon" class="text-lg flex-shrink-0">📍</div>
+        <div class="min-w-0 flex-1">
+            <p id="locationText" class="text-xs font-semibold text-slate-700">Mengambil lokasi...</p>
+            <p id="locationSub"  class="text-xs text-slate-400 mt-0.5">Mohon izinkan akses lokasi</p>
+        </div>
+        <div id="locationSpinner"
+             class="w-4 h-4 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin flex-shrink-0">
+        </div>
+    </div>
+</div>
                         {{-- Hidden inputs untuk masing-masing sumber --}}
                         <input type="file" id="fileInputGallery" accept="image/*,application/pdf,.xls,.xlsx" class="hidden"
                             onchange="handleFileSelected(this)">
@@ -945,474 +936,590 @@
                     </div>
                 </div>
             </div>
-            <script>
-                // ============================================================
-                // UPLOAD MODAL STATE
-                // ============================================================
-                let uploadChecklistId = null;
-                let uploadChecklistTitle = '';
-                let selectedFile = null;
-                let cameraStream = null;
-                async function openCameraModal() {
-                    const modal = document.getElementById('cameraModal');
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
+           <script>
+// ============================================================
+// STATE
+// ============================================================
+let uploadChecklistId    = null;
+let uploadChecklistTitle = '';
+let selectedFile         = null;
+let cameraStream         = null;
+let currentLatitude      = null;
+let currentLongitude     = null;
+let currentAddress       = null;
+let locationWatchDone    = false;
 
-                    try {
-                        cameraStream = await navigator.mediaDevices.getUserMedia({
-                            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-                        });
-                        document.getElementById('cameraVideo').srcObject = cameraStream;
-                    } catch (err) {
-                        alert('Tidak dapat mengakses kamera: ' + err.message);
-                        closeCameraModal();
-                    }
-                }
+// ============================================================
+// GEOLOCATION
+// ============================================================
+function startLocationWatch() {
+    currentLatitude   = null;
+    currentLongitude  = null;
+    currentAddress    = null;
+    locationWatchDone = false;
 
-                function closeCameraModal() {
-                    if (cameraStream) {
-                        cameraStream.getTracks().forEach(t => t.stop());
-                        cameraStream = null;
-                    }
-                    const modal = document.getElementById('cameraModal');
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }
+    const statusEl  = document.getElementById('locationStatus');
+    const iconEl    = document.getElementById('locationIcon');
+    const textEl    = document.getElementById('locationText');
+    const subEl     = document.getElementById('locationSub');
+    const spinnerEl = document.getElementById('locationSpinner');
 
-                function capturePhoto() {
-                    const video = document.getElementById('cameraVideo');
-                    const canvas = document.getElementById('cameraCanvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
+    if (statusEl) {
+        statusEl.className = 'rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3';
+        statusEl.classList.remove('hidden');
+        iconEl.textContent = '📍';
+        textEl.textContent = 'Mengambil lokasi...';
+        subEl.textContent  = 'Mohon izinkan akses lokasi';
+        spinnerEl.classList.remove('hidden');
+    }
 
-                    canvas.toBlob(blob => {
-                        const file = new File([blob], 'foto-bukti.jpg', { type: 'image/jpeg' });
-                        closeCameraModal();
-                        // Inject file seolah dipilih dari input
-                        selectedFile = file;
-                        hideUploadError();
-                        showFilePreview(file);
-                        document.getElementById('uploadSubmitBtn').disabled = false;
-                    }, 'image/jpeg', 0.92);
-                }
-                /**
-                 * Dipanggil saat label checklist diklik.
-                 * - Jika sudah done → langsung submit un-check form
-                 * - Jika belum done dan belum punya file → buka modal upload
-                 * - Jika belum done tapi sudah punya file → buka modal upload (ganti bukti)
-                 */
-                function handleChecklistClick(event, checklistId, isDone, hasFile, uncheckReason = null) {
-                    event.preventDefault();
-                    event.stopPropagation();
+    if (!navigator.geolocation) {
+        locationWatchDone = true;
+        if (statusEl) {
+            iconEl.textContent = '⚠️';
+            textEl.textContent = 'Lokasi tidak tersedia';
+            subEl.textContent  = 'Browser tidak mendukung geolocation';
+            spinnerEl.classList.add('hidden');
+            statusEl.className = 'rounded-xl border border-amber-200 bg-amber-50 px-4 py-3';
+        }
+        return;
+    }
 
-                    if (isDone) {
-                        // Un-check: submit form tanpa is_done
-                        document.getElementById('uncheck-form-' + checklistId).submit();
-                        return;
-                    }
+    navigator.geolocation.getCurrentPosition(
+        async function(pos) {
+            currentLatitude  = pos.coords.latitude;
+            currentLongitude = pos.coords.longitude;
+            locationWatchDone = true;
 
-                    // Centang: wajib upload bukti dulu
-                    openUploadModal(
-                        checklistId,
-                        event.currentTarget.querySelector('p.font-semibold')?.textContent?.trim() || '',
-                        uncheckReason
-                    );
-                }
+            // Reverse geocode via Nominatim
+            try {
+                const res  = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${currentLatitude}&lon=${currentLongitude}`,
+                    { headers: { 'Accept-Language': 'id' } }
+                );
+                const data = await res.json();
+                currentAddress = data.display_name ?? null;
+            } catch(_) { currentAddress = null; }
 
-                function openUploadModal(checklistId, title, uncheckReason = null) {
-                    uploadChecklistId = checklistId;
-                    uploadChecklistTitle = title;
-                    selectedFile = null;
+            if (statusEl) {
+                iconEl.textContent = '✅';
+                textEl.textContent = currentAddress ?? `${currentLatitude.toFixed(5)}, ${currentLongitude.toFixed(5)}`;
+                subEl.textContent  = 'Akurasi ±' + Math.round(pos.coords.accuracy) + 'm';
+                spinnerEl.classList.add('hidden');
+                statusEl.className = 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3';
+            }
+        },
+        function(err) {
+            locationWatchDone = true;
+            if (statusEl) {
+                iconEl.textContent = '❌';
+                textEl.textContent = 'Gagal mendapatkan lokasi';
+                subEl.textContent  = err.code === 1 ? 'Akses lokasi ditolak' : 'Periksa GPS Anda';
+                spinnerEl.classList.add('hidden');
+                statusEl.className = 'rounded-xl border border-red-200 bg-red-50 px-4 py-3';
+            }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
 
-                    document.getElementById('uploadModalSubtitle').textContent = title || 'Checklist item';
-                    document.getElementById('uploadPreviewArea').classList.add('hidden');
-                    document.getElementById('uploadErrorMsg').classList.add('hidden');
-                    document.getElementById('uploadSubmitBtn').disabled = true;
-                    document.getElementById('uploadSubmitLabel').classList.remove('hidden');
-                    document.getElementById('uploadSubmitSpinner').classList.add('hidden');
+// ============================================================
+// STAMP IMAGE (timestamp + lokasi)
+// ============================================================
+function stampImage(file) {
+    return new Promise(function(resolve) {
+        if (!file.type.startsWith('image/')) { resolve(file); return; }
 
-                    // Tampilkan atau sembunyikan alasan penolakan
-                    const reasonArea = document.getElementById('uploadReasonArea');
-                    if (uncheckReason) {
-                        reasonArea.classList.remove('hidden');
-                        document.getElementById('uploadReasonText').textContent = uncheckReason;
-                    } else {
-                        reasonArea.classList.add('hidden');
-                    }
+        const img = new Image();
+        const url = URL.createObjectURL(file);
 
-                    // Reset semua input file
-                    ['fileInputGallery', 'fileInputCamera', 'fileInputDocument'].forEach(id => {
-                        document.getElementById(id).value = '';
-                    });
+        img.onload = function() {
+            const canvas    = document.createElement('canvas');
+            canvas.width    = img.naturalWidth;
+            canvas.height   = img.naturalHeight;
+            const ctx       = canvas.getContext('2d');
 
-                    const modal = document.getElementById('uploadModal');
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-                }
+            ctx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(url);
 
-                function closeUploadModal(event) {
-                    if (event && event.target !== document.getElementById('uploadModal')) return;
-                    const modal = document.getElementById('uploadModal');
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    uploadChecklistId = null;
-                    selectedFile = null;
-                }
+            const now     = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            const timeStr = now.toLocaleTimeString('id-ID', {
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            const locStr  = currentAddress ?? 'Lokasi tidak tersedia';
+            const coordStr = (currentLatitude && currentLongitude)
+                ? currentLatitude.toFixed(5) + ', ' + currentLongitude.toFixed(5)
+                : '';
 
-                function triggerFileInput(source) {
-                    if (source === 'camera') {
-                        openCameraModal();
-                        return;
-                    }
-                    const map = {
-                        gallery: 'fileInputGallery',
-                        document: 'fileInputDocument',
-                    };
-                    document.getElementById(map[source]).click();
-                }
+            const lines    = [dateStr, timeStr, locStr, coordStr].filter(Boolean);
+            const fontSize = Math.max(20, Math.round(canvas.width * 0.022));
+            const padding  = Math.round(fontSize * 0.7);
+            const lineH    = Math.round(fontSize * 1.55);
+            const boxH     = padding * 2 + lineH * lines.length;
+            const boxY     = canvas.height - boxH;
 
-                function handleFileSelected(input) {
-                    const file = input.files[0];
-                    if (!file) return;
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.fillRect(0, boxY, canvas.width, boxH);
 
-                    // Validasi ukuran (10 MB)
-                    if (file.size > 10 * 1024 * 1024) {
-                        showUploadError('Ukuran file melebihi 10 MB. Pilih file yang lebih kecil.');
-                        input.value = '';
-                        return;
-                    }
+            ctx.font         = 'bold ' + fontSize + 'px Arial, sans-serif';
+            ctx.fillStyle    = '#ffffff';
+            ctx.shadowColor  = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur   = 4;
+            ctx.textBaseline = 'top';
 
-                    // Validasi tipe
-                    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp',
-                        'application/pdf',
-                        'application/vnd.ms-excel',
+            lines.forEach(function(line, i) {
+                ctx.fillText(line, padding, boxY + padding + i * lineH);
+            });
+
+            canvas.toBlob(function(blob) {
+                resolve(new File([blob], file.name, {
+                    type: 'image/jpeg', lastModified: Date.now()
+                }));
+            }, 'image/jpeg', 0.92);
+        };
+
+        img.onerror = function() { resolve(file); };
+        img.src = url;
+    });
+}
+
+// ============================================================
+// PROCESS + PREVIEW FILE
+// ============================================================
+async function processAndPreviewFile(file) {
+    hideUploadError();
+    const btn   = document.getElementById('uploadSubmitBtn');
+    const label = document.getElementById('uploadSubmitLabel');
+    btn.disabled      = true;
+    label.textContent = 'Memproses...';
+
+    const stamped = await stampImage(file);
+    selectedFile  = stamped;
+
+    label.textContent = 'Upload & Selesaikan';
+    showFilePreview(stamped);
+    btn.disabled = false;
+}
+
+// ============================================================
+// CHECKLIST CLICK HANDLER
+// ============================================================
+function handleChecklistClick(event, checklistId, isDone, hasFile, uncheckReason = null) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (isDone) {
+        document.getElementById('uncheck-form-' + checklistId).submit();
+        return;
+    }
+
+    openUploadModal(
+        checklistId,
+        event.currentTarget.querySelector('p.font-semibold')?.textContent?.trim() || '',
+        uncheckReason
+    );
+}
+
+// ============================================================
+// UPLOAD MODAL
+// ============================================================
+function openUploadModal(checklistId, title, uncheckReason = null) {
+    uploadChecklistId    = checklistId;
+    uploadChecklistTitle = title;
+    selectedFile         = null;
+    currentLatitude      = null;
+    currentLongitude     = null;
+    currentAddress       = null;
+
+    document.getElementById('uploadModalSubtitle').textContent = title || 'Checklist item';
+    document.getElementById('uploadPreviewArea').classList.add('hidden');
+    document.getElementById('uploadErrorMsg').classList.add('hidden');
+    document.getElementById('uploadSubmitBtn').disabled = true;
+    document.getElementById('uploadSubmitLabel').textContent = 'Upload & Selesaikan';
+    document.getElementById('uploadSubmitLabel').classList.remove('hidden');
+    document.getElementById('uploadSubmitSpinner').classList.add('hidden');
+
+    // Alasan penolakan
+    const reasonArea = document.getElementById('uploadReasonArea');
+    if (uncheckReason) {
+        reasonArea.classList.remove('hidden');
+        document.getElementById('uploadReasonText').textContent = uncheckReason;
+    } else {
+        reasonArea.classList.add('hidden');
+    }
+
+    ['fileInputGallery','fileInputCamera','fileInputDocument'].forEach(function(id) {
+        document.getElementById(id).value = '';
+    });
+
+    // Mulai ambil lokasi
+    startLocationWatch();
+
+    const modal = document.getElementById('uploadModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeUploadModal(event) {
+    if (event && event.target !== document.getElementById('uploadModal')) return;
+    document.getElementById('uploadModal').classList.add('hidden');
+    document.getElementById('uploadModal').classList.remove('flex');
+    uploadChecklistId = null;
+    selectedFile      = null;
+}
+
+// ============================================================
+// FILE INPUT
+// ============================================================
+function triggerFileInput(source) {
+    if (source === 'camera') { openCameraModal(); return; }
+    const map = { gallery: 'fileInputGallery', document: 'fileInputDocument' };
+    document.getElementById(map[source]).click();
+}
+
+async function handleFileSelected(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+        showUploadError('Ukuran file melebihi 10 MB.');
+        input.value = '';
+        return;
+    }
+
+    const allowed    = ['image/jpeg','image/png','image/gif','image/webp',
+                        'application/pdf','application/vnd.ms-excel',
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-                    // Beberapa browser memberi tipe kosong untuk xls/xlsx, cek ekstensi juga
-                    const ext = file.name.split('.').pop().toLowerCase();
-                    const allowedExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'xls', 'xlsx'];
+    const ext        = file.name.split('.').pop().toLowerCase();
+    const allowedExt = ['jpg','jpeg','png','gif','webp','pdf','xls','xlsx'];
 
-                    if (!allowed.includes(file.type) && !allowedExt.includes(ext)) {
-                        showUploadError('Tipe file tidak didukung. Gunakan JPG, PNG, GIF, WEBP, PDF, XLS, atau XLSX.');
-                        input.value = '';
-                        return;
-                    }
+    if (!allowed.includes(file.type) && !allowedExt.includes(ext)) {
+        showUploadError('Tipe file tidak didukung.');
+        input.value = '';
+        return;
+    }
 
-                    selectedFile = file;
-                    hideUploadError();
-                    showFilePreview(file);
-                    document.getElementById('uploadSubmitBtn').disabled = false;
-                }
+    await processAndPreviewFile(file);
+}
 
-                function showFilePreview(file) {
-                    const area = document.getElementById('uploadPreviewArea');
-                    const nameEl = document.getElementById('uploadPreviewName');
-                    const sizeEl = document.getElementById('uploadPreviewSize');
-                    const iconEl = document.getElementById('uploadPreviewIcon');
-                    const imgWrap = document.getElementById('imagePreviewWrapper');
-                    const imgEl = document.getElementById('imagePreviewEl');
+// ============================================================
+// CAMERA MODAL
+// ============================================================
+async function openCameraModal() {
+    const modal = document.getElementById('cameraModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        document.getElementById('cameraVideo').srcObject = cameraStream;
+    } catch(err) {
+        alert('Tidak dapat mengakses kamera: ' + err.message);
+        closeCameraModal();
+    }
+}
 
-                    nameEl.textContent = file.name;
-                    sizeEl.textContent = formatBytes(file.size);
+function closeCameraModal() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(function(t) { t.stop(); });
+        cameraStream = null;
+    }
+    document.getElementById('cameraModal').classList.add('hidden');
+    document.getElementById('cameraModal').classList.remove('flex');
+}
 
-                    const isImage = file.type.startsWith('image/');
-                    const isPdf = file.type === 'application/pdf';
-                    const isExcel = ['application/vnd.ms-excel',
-                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-                        .includes(file.type) ||
-                        ['xls', 'xlsx'].includes(file.name.split('.').pop().toLowerCase());
+function capturePhoto() {
+    const video  = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], 'foto-bukti.jpg', { type: 'image/jpeg' });
+        closeCameraModal();
+        processAndPreviewFile(file);
+    }, 'image/jpeg', 0.92);
+}
 
-                    iconEl.textContent = isImage ? '🖼️' : isPdf ? '📄' : isExcel ? '📊' : '📎';
+// ============================================================
+// FILE PREVIEW HELPERS
+// ============================================================
+function showFilePreview(file) {
+    const area    = document.getElementById('uploadPreviewArea');
+    const nameEl  = document.getElementById('uploadPreviewName');
+    const sizeEl  = document.getElementById('uploadPreviewSize');
+    const iconEl  = document.getElementById('uploadPreviewIcon');
+    const imgWrap = document.getElementById('imagePreviewWrapper');
+    const imgEl   = document.getElementById('imagePreviewEl');
 
-                    if (isImage) {
-                        const reader = new FileReader();
-                        reader.onload = e => { imgEl.src = e.target.result; };
-                        reader.readAsDataURL(file);
-                        imgWrap.classList.remove('hidden');
-                    } else {
-                        imgWrap.classList.add('hidden');
-                    }
+    nameEl.textContent = file.name;
+    sizeEl.textContent = formatBytes(file.size);
 
-                    area.classList.remove('hidden');
-                }
+    const isImage = file.type.startsWith('image/');
+    const isPdf   = file.type === 'application/pdf';
+    const isExcel = ['application/vnd.ms-excel',
+                     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'].includes(file.type)
+                 || ['xls','xlsx'].includes(file.name.split('.').pop().toLowerCase());
 
-                function clearFileSelection() {
-                    selectedFile = null;
-                    ['fileInputGallery', 'fileInputCamera', 'fileInputDocument'].forEach(id => {
-                        document.getElementById(id).value = '';
-                    });
-                    document.getElementById('uploadPreviewArea').classList.add('hidden');
-                    document.getElementById('uploadSubmitBtn').disabled = true;
-                }
+    iconEl.textContent = isImage ? '🖼️' : isPdf ? '📄' : isExcel ? '📊' : '📎';
 
-                function showUploadError(msg) {
-                    const el = document.getElementById('uploadErrorMsg');
-                    document.getElementById('uploadErrorText').textContent = msg;
-                    el.classList.remove('hidden');
-                }
+    if (isImage) {
+        const reader  = new FileReader();
+        reader.onload = function(e) { imgEl.src = e.target.result; };
+        reader.readAsDataURL(file);
+        imgWrap.classList.remove('hidden');
+    } else {
+        imgWrap.classList.add('hidden');
+    }
 
-                function hideUploadError() {
-                    document.getElementById('uploadErrorMsg').classList.add('hidden');
-                }
+    area.classList.remove('hidden');
+}
 
-                function formatBytes(bytes) {
-                    if (bytes < 1024) return bytes + ' B';
-                    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-                    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-                }
+function clearFileSelection() {
+    selectedFile = null;
+    ['fileInputGallery','fileInputCamera','fileInputDocument'].forEach(function(id) {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('uploadPreviewArea').classList.add('hidden');
+    document.getElementById('uploadSubmitBtn').disabled = true;
+}
 
-                function submitChecklistFile() {
-                    if (!selectedFile || !uploadChecklistId) return;
+function showUploadError(msg) {
+    document.getElementById('uploadErrorText').textContent = msg;
+    document.getElementById('uploadErrorMsg').classList.remove('hidden');
+}
 
-                    const btn = document.getElementById('uploadSubmitBtn');
-                    const label = document.getElementById('uploadSubmitLabel');
-                    const spinner = document.getElementById('uploadSubmitSpinner');
+function hideUploadError() {
+    document.getElementById('uploadErrorMsg').classList.add('hidden');
+}
 
-                    btn.disabled = true;
-                    label.classList.add('hidden');
-                    spinner.classList.remove('hidden');
-                    hideUploadError();
+function formatBytes(bytes) {
+    if (bytes < 1024)    return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
 
-                    const formData = new FormData();
-                    formData.append('file', selectedFile);
-                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+// ============================================================
+// SUBMIT UPLOAD
+// ============================================================
+function submitChecklistFile() {
+    if (!selectedFile || !uploadChecklistId) return;
 
-                    fetch(`/project/checklist/${uploadChecklistId}/upload-file`, {
-                        method: 'POST',
-                        body: formData,
-                    })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (!data.success) {
-                                showUploadError(data.message || 'Gagal mengupload file.');
-                                btn.disabled = false;
-                                label.classList.remove('hidden');
-                                spinner.classList.add('hidden');
-                                return;
-                            }
-                            // Sukses → tutup modal dan reload halaman
-                            const modal = document.getElementById('uploadModal');
-                            modal.classList.add('hidden');
-                            modal.classList.remove('flex');
-                            window.location.reload();
-                        })
-                        .catch(() => {
-                            showUploadError('Terjadi kesalahan. Silakan coba lagi.');
-                            btn.disabled = false;
-                            label.classList.remove('hidden');
-                            spinner.classList.add('hidden');
-                        });
-                }
+    const btn     = document.getElementById('uploadSubmitBtn');
+    const label   = document.getElementById('uploadSubmitLabel');
+    const spinner = document.getElementById('uploadSubmitSpinner');
 
-                function deleteChecklistFile(checklistId) {
-                    if (!confirm('Hapus file bukti ini? Status checklist akan kembali ke belum selesai.')) return;
+    btn.disabled = true;
+    label.classList.add('hidden');
+    spinner.classList.remove('hidden');
+    hideUploadError();
 
-                    fetch(`/project/checklist/${checklistId}/delete-file`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Content-Type': 'application/json',
-                        },
-                    })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.success) window.location.reload();
-                            else alert(data.message || 'Gagal menghapus file.');
-                        })
-                        .catch(() => alert('Terjadi kesalahan.'));
-                }
+    const formData = new FormData();
+    formData.append('file',    selectedFile);
+    formData.append('_token',  document.querySelector('meta[name="csrf-token"]').content);
+    if (currentLatitude  !== null) formData.append('latitude',  currentLatitude);
+    if (currentLongitude !== null) formData.append('longitude', currentLongitude);
+    if (currentAddress   !== null) formData.append('address',   currentAddress);
 
-                // ============================================================
-                // DROPDOWN & CHAT (tidak diubah)
-                // ============================================================
-                function toggleDropdown(id) {
-                    document.getElementById(id).classList.toggle('hidden');
-                }
+    fetch(`/project/checklist/${uploadChecklistId}/upload-file`, {
+        method: 'POST',
+        body  : formData,
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success) {
+            showUploadError(data.message || 'Gagal mengupload file.');
+            btn.disabled = false;
+            label.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            return;
+        }
+        document.getElementById('uploadModal').classList.add('hidden');
+        document.getElementById('uploadModal').classList.remove('flex');
+        window.location.reload();
+    })
+    .catch(function() {
+        showUploadError('Terjadi kesalahan. Silakan coba lagi.');
+        btn.disabled = false;
+        label.classList.remove('hidden');
+        spinner.classList.add('hidden');
+    });
+}
 
-                function toggleMobileDropdown(id) {
-                    const element = document.getElementById(id);
-                    const iconId = id.replace('mobile-dropdown-', 'mobile-icon-');
-                    const icon = document.getElementById(iconId);
-                    element.classList.toggle('hidden');
-                    icon.classList.toggle('rotate-180');
-                }
+// ============================================================
+// DELETE FILE
+// ============================================================
+function deleteChecklistFile(checklistId) {
+    if (!confirm('Hapus file bukti ini? Status checklist akan kembali ke belum selesai.')) return;
+    fetch(`/project/checklist/${checklistId}/delete-file`, {
+        method : 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) window.location.reload();
+        else alert(data.message || 'Gagal menghapus file.');
+    })
+    .catch(function() { alert('Terjadi kesalahan.'); });
+}
 
-                let staffChatRoomType = null;
-                let staffChatRoomId = null;
+// ============================================================
+// DROPDOWN & MOBILE FILTER (tidak berubah)
+// ============================================================
+function toggleDropdown(id) {
+    document.getElementById(id).classList.toggle('hidden');
+}
 
-                function openStaffChat(roomType, roomId = null, title = 'Chat') {
-                    staffChatRoomType = roomType;
-                    staffChatRoomId = roomId;
-                    document.getElementById('staffChatPanelTitle').innerText = title;
-                    document.getElementById('staffChatPanelSubtitle').innerText = roomType === 'global' ? 'Global staff chat' : 'Chat tugas';
-                    document.getElementById('staffChatPanel').classList.remove('hidden');
-                    document.getElementById('staffChatPanel').classList.add('flex');
-                    document.getElementById('staffChatInput').value = '';
-                    clearStaffChatReply();
-                    loadStaffChatMessages();
-                }
+function toggleMobileDropdown(id) {
+    const element = document.getElementById(id);
+    const iconId  = id.replace('mobile-dropdown-', 'mobile-icon-');
+    const icon    = document.getElementById(iconId);
+    element.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
 
-                function closeStaffChatPanel() {
-                    document.getElementById('staffChatPanel').classList.add('hidden');
-                }
+let staffChatRoomType = null;
+let staffChatRoomId   = null;
 
-                function clearStaffChatReply() {
-                    const preview = document.getElementById('staffChatReplyPreview');
-                    if (preview) preview.classList.add('hidden');
-                    const text = document.getElementById('staffChatReplyText');
-                    if (text) text.innerText = '';
-                }
+function openStaffChat(roomType, roomId = null, title = 'Chat') {
+    staffChatRoomType = roomType;
+    staffChatRoomId   = roomId;
+    document.getElementById('staffChatPanelTitle').innerText    = title;
+    document.getElementById('staffChatPanelSubtitle').innerText = roomType === 'global' ? 'Global staff chat' : 'Chat tugas';
+    document.getElementById('staffChatPanel').classList.remove('hidden');
+    document.getElementById('staffChatPanel').classList.add('flex');
+    document.getElementById('staffChatInput').value = '';
+    clearStaffChatReply();
+    loadStaffChatMessages();
+}
 
-                function loadStaffChatMessages() {
-                    const chatBody = document.getElementById('staffChatMessages');
-                    chatBody.innerHTML = '<div class="text-sm text-slate-500">Memuat percakapan...</div>';
+function closeStaffChatPanel() {
+    document.getElementById('staffChatPanel').classList.add('hidden');
+}
 
-                    let url = '/chat/room/global';
-                    if (staffChatRoomType === 'task') url = `/chat/room/task/${staffChatRoomId}`;
+function clearStaffChatReply() {
+    const preview = document.getElementById('staffChatReplyPreview');
+    if (preview) preview.classList.add('hidden');
+    const text = document.getElementById('staffChatReplyText');
+    if (text) text.innerText = '';
+}
 
-                    fetch(url)
-                        .then(r => r.json())
-                        .then(data => {
-                            chatBody.innerHTML = '';
-                            const messages = data.messages || [];
-                            if (!messages.length) {
-                                chatBody.innerHTML = '<div class="text-sm text-slate-500">Belum ada pesan.</div>';
-                                return;
-                            }
-                            messages.forEach(m => appendStaffChatBubble(m));
-                            chatBody.scrollTop = chatBody.scrollHeight;
-                        })
-                        .catch(() => {
-                            chatBody.innerHTML = '<div class="text-sm text-red-500">Gagal memuat percakapan.</div>';
-                        });
-                }
+function loadStaffChatMessages() {
+    const chatBody = document.getElementById('staffChatMessages');
+    chatBody.innerHTML = '<div class="text-sm text-slate-500">Memuat percakapan...</div>';
+    let url = '/chat/room/global';
+    if (staffChatRoomType === 'task') url = `/chat/room/task/${staffChatRoomId}`;
+    fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            chatBody.innerHTML = '';
+            const messages = data.messages || [];
+            if (!messages.length) {
+                chatBody.innerHTML = '<div class="text-sm text-slate-500">Belum ada pesan.</div>';
+                return;
+            }
+            messages.forEach(function(m) { appendStaffChatBubble(m); });
+            chatBody.scrollTop = chatBody.scrollHeight;
+        })
+        .catch(function() {
+            chatBody.innerHTML = '<div class="text-sm text-red-500">Gagal memuat percakapan.</div>';
+        });
+}
 
-                function appendStaffChatBubble(message) {
-                    const chatBody = document.getElementById('staffChatMessages');
-                    const isOwn = message.from_user_id === {{ auth()->id() }};
-                    const container = document.createElement('div');
-                    container.className = `flex ${isOwn ? 'justify-end' : 'justify-start'}`;
+function appendStaffChatBubble(message) {
+    const chatBody = document.getElementById('staffChatMessages');
+    const isOwn    = message.from_user_id === {{ auth()->id() }};
+    const container = document.createElement('div');
+    container.className = `flex ${isOwn ? 'justify-end' : 'justify-start'}`;
+    const bubble = document.createElement('div');
+    bubble.className = `rounded-3xl p-4 shadow-sm max-w-[80%] ${isOwn ? 'bg-indigo-600 text-white' : 'bg-white text-slate-800 border border-slate-200'}`;
+    if (message.reply_to) {
+        const reply = document.createElement('div');
+        reply.className = 'mb-3 rounded-3xl bg-slate-100 px-3 py-2 text-xs text-slate-600';
+        reply.textContent = message.reply_to.body || 'Balasan';
+        bubble.appendChild(reply);
+    }
+    const text = document.createElement('div');
+    text.className   = 'text-sm';
+    text.textContent = message.body;
+    bubble.appendChild(text);
+    const meta = document.createElement('div');
+    meta.className   = 'mt-2 text-[11px] text-slate-400';
+    meta.textContent = `${message.from_user?.name || 'Pengguna'} • ${new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    bubble.appendChild(meta);
+    container.appendChild(bubble);
+    chatBody.appendChild(container);
+}
 
-                    const bubble = document.createElement('div');
-                    bubble.className = `rounded-3xl p-4 shadow-sm max-w-[80%] ${isOwn ? 'bg-indigo-600 text-white' : 'bg-white text-slate-800 border border-slate-200'}`;
+function sendStaffChatMessage() {
+    const input = document.getElementById('staffChatInput');
+    const body  = input.value.trim();
+    if (!body) return;
+    const payload = { body, room_type: staffChatRoomType, reply_to_id: null };
+    if (staffChatRoomType === 'task') payload.task_id = staffChatRoomId;
+    fetch('/chat/message', {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body   : JSON.stringify(payload),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.success) { alert(data.message || 'Gagal mengirim pesan.'); return; }
+        input.value = '';
+        clearStaffChatReply();
+        loadStaffChatMessages();
+    })
+    .catch(function() { alert('Gagal mengirim pesan.'); });
+}
 
-                    if (message.reply_to) {
-                        const reply = document.createElement('div');
-                        reply.className = 'mb-3 rounded-3xl bg-slate-100 px-3 py-2 text-xs text-slate-600';
-                        reply.textContent = message.reply_to.body || 'Balasan';
-                        bubble.appendChild(reply);
-                    }
+// Mobile search & filter
+let mobileActiveFilter = 'all';
 
-                    const text = document.createElement('div');
-                    text.className = 'text-sm';
-                    text.textContent = message.body;
-                    bubble.appendChild(text);
+function setMobileFilter(filter) {
+    mobileActiveFilter = filter;
+    document.querySelectorAll('.mobile-filter-btn').forEach(function(btn) {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+    });
+    const activeBtn = document.getElementById('filter-' + filter);
+    if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+        activeBtn.classList.add('bg-indigo-600', 'text-white');
+    }
+    filterMobileCards();
+}
 
-                    const meta = document.createElement('div');
-                    meta.className = 'mt-2 text-[11px] text-slate-400';
-                    meta.textContent = `${message.from_user?.name || 'Pengguna'} • ${new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-                    bubble.appendChild(meta);
-
-                    container.appendChild(bubble);
-                    chatBody.appendChild(container);
-                }
-
-                function sendStaffChatMessage() {
-                    const input = document.getElementById('staffChatInput');
-                    const body = input.value.trim();
-                    if (!body) return;
-                    if (!staffChatRoomType) { alert('Buka room chat terlebih dahulu.'); return; }
-
-                    const payload = { body, room_type: staffChatRoomType, reply_to_id: null };
-                    if (staffChatRoomType === 'task') payload.task_id = staffChatRoomId;
-
-                    fetch('/chat/message', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        },
-                        body: JSON.stringify(payload),
-                    })
-                        .then(r => r.json())
-                        .then(data => {
-                            if (!data.success) { alert(data.message || 'Gagal mengirim pesan.'); return; }
-                            input.value = '';
-                            clearStaffChatReply();
-                            loadStaffChatMessages();
-                        })
-                        .catch(() => alert('Gagal mengirim pesan.'));
-                }
-                // ============================================================
-                // MOBILE SEARCH & FILTER
-                // ============================================================
-                let mobileActiveFilter = 'all';
-
-                function setMobileFilter(filter) {
-                    mobileActiveFilter = filter;
-
-                    // Update tombol aktif
-                    document.querySelectorAll('.mobile-filter-btn').forEach(btn => {
-                        btn.classList.remove('bg-indigo-600', 'text-white');
-                        btn.classList.add('bg-slate-100', 'text-slate-600');
-                    });
-                    const activeBtn = document.getElementById('filter-' + filter);
-                    if (activeBtn) {
-                        activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
-                        activeBtn.classList.add('bg-indigo-600', 'text-white');
-                    }
-
-                    filterMobileCards();
-                }
-
-                function filterMobileCards() {
-                    const query = document.getElementById('mobileSearchInput').value.toLowerCase().trim();
-                    const cards = document.querySelectorAll('.mobile-card');
-                    let visible = 0;
-
-                    cards.forEach(card => {
-                        const taskTitle = card.dataset.taskTitle || '';
-                        const checklistTitles = card.dataset.checklistTitles || '';
-                        const doneCount = parseInt(card.dataset.doneCount) || 0;
-                        const totalCount = parseInt(card.dataset.totalCount) || 0;
-
-                        // Cek search
-                        const matchSearch = !query ||
-                            taskTitle.includes(query) ||
-                            checklistTitles.includes(query);
-
-                        // Cek filter
-                        let matchFilter = true;
-                        if (mobileActiveFilter === 'done') {
-                            matchFilter = totalCount > 0 && doneCount === totalCount;
-                        } else if (mobileActiveFilter === 'pending') {
-                            matchFilter = doneCount < totalCount;
-                        }
-
-                        if (matchSearch && matchFilter) {
-                            card.classList.remove('hidden');
-                            visible++;
-                        } else {
-                            card.classList.add('hidden');
-                        }
-                    });
-
-                    // Update counter
-                    const countEl = document.getElementById('mobileFilterCount');
-                    if (query || mobileActiveFilter !== 'all') {
-                        countEl.textContent = `Menampilkan ${visible} dari ${cards.length} assignment`;
-                    } else {
-                        countEl.textContent = '';
-                    }
-
-                    // Empty state
-                    const emptyEl = document.getElementById('mobileEmptyFilter');
-                    if (visible === 0) {
-                        emptyEl.classList.remove('hidden');
-                    } else {
-                        emptyEl.classList.add('hidden');
-                    }
-                }
-            </script>
+function filterMobileCards() {
+    const query = document.getElementById('mobileSearchInput').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('.mobile-card');
+    let visible = 0;
+    cards.forEach(function(card) {
+        const taskTitle       = card.dataset.taskTitle || '';
+        const checklistTitles = card.dataset.checklistTitles || '';
+        const doneCount       = parseInt(card.dataset.doneCount)  || 0;
+        const totalCount      = parseInt(card.dataset.totalCount) || 0;
+        const matchSearch     = !query || taskTitle.includes(query) || checklistTitles.includes(query);
+        let matchFilter       = true;
+        if      (mobileActiveFilter === 'done')    matchFilter = totalCount > 0 && doneCount === totalCount;
+        else if (mobileActiveFilter === 'pending') matchFilter = doneCount < totalCount;
+        if (matchSearch && matchFilter) { card.classList.remove('hidden'); visible++; }
+        else                            { card.classList.add('hidden'); }
+    });
+    const countEl = document.getElementById('mobileFilterCount');
+    if (query || mobileActiveFilter !== 'all') {
+        countEl.textContent = `Menampilkan ${visible} dari ${cards.length} assignment`;
+    } else {
+        countEl.textContent = '';
+    }
+    document.getElementById('mobileEmptyFilter').classList.toggle('hidden', visible > 0);
+}
+</script>
 
 @endsection
