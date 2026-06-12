@@ -22,8 +22,8 @@
                         </button>
                         <a href="{{ route('supervisor.dashboard') }}"
                             class="inline-flex items-center justify-center rounded-2xl md:rounded-3xl bg-slate-900 px-3 md:px-5 py-2 md:py-3 text-[11px] md:text-sm font-semibold text-white shadow-lg shadow-slate-200 hover:bg-slate-800 transition whitespace-nowrap">
-                            <span class="hidden sm:inline">← Back</span>
-                            <span class="sm:hidden">←</span>
+                            <x-icon name="back" class="w-4 h-4" />
+                            <span class="hidden sm:inline">Back</span>
                         </a>
                     </div>
                 </div>
@@ -105,27 +105,41 @@
                             </thead>
                             <tbody class="divide-y divide-slate-200">
                                 @foreach($memberAssignments as $index => $assignment)
+                                    @php
+                                        $doneChecklist = $assignment->checklists->where('is_done', true)->count();
+                                        $totalChecklist = $assignment->checklists->count();
+                                        $assignmentStatus = $totalChecklist > 0
+                                            ? ($doneChecklist >= $totalChecklist ? 'done' : ($doneChecklist > 0 ? 'progress' : 'pending'))
+                                            : 'pending';
+                                        $assignmentStatusLabel = $assignmentStatus === 'done' ? 'Done' : ($assignmentStatus === 'progress' ? 'On Progress' : 'Pending');
+                                        $assignmentStatusClass = $assignmentStatus === 'done'
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : ($assignmentStatus === 'progress' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
+                                    @endphp
                                     <tr class="hover:bg-slate-50 transition">
                                         <td class="px-6 py-4">
                                             <p class="text-sm font-semibold text-slate-900">{{ optional($assignment->task)->title ?? '—' }}</p>
                                             <p class="text-xs text-slate-400 mt-1">#{{ $assignment->task_id }}</p>
+                                            <span class="mt-2 inline-block rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $assignmentStatusClass }}">
+                                                {{ $assignmentStatusLabel }}
+                                            </span>
                                         </td>
                                         <td class="px-6 py-4">
                                             <p class="text-sm text-slate-600 line-clamp-2">{{ $assignment->description ?? '-' }}</p>
                                         </td>
                                         <td class="px-6 py-4 text-center">
                                             <span class="inline-block rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700">
-                                                {{ $assignment->checklists->count() }}
+                                                {{ $totalChecklist }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex flex-col items-center gap-2">
                                                 <div class="w-full bg-slate-200 rounded-full h-2 max-w-xs">
                                                     <div class="bg-emerald-500 h-2 rounded-full"
-                                                        style="width:{{ $assignment->checklists->count() > 0 ? ($assignment->checklists->where('is_done',true)->count() / $assignment->checklists->count() * 100) : 0 }}%"></div>
+                                                        style="width:{{ $totalChecklist > 0 ? ($doneChecklist / $totalChecklist * 100) : 0 }}%"></div>
                                                 </div>
                                                 <p class="text-xs text-slate-500">
-                                                    {{ $assignment->checklists->where('is_done',true)->count() }}/{{ $assignment->checklists->count() }}
+                                                    {{ $doneChecklist }}/{{ $totalChecklist }}
                                                 </p>
                                             </div>
                                         </td>
@@ -283,6 +297,17 @@
                     {{-- Mobile Cards --}}
                     <div class="md:hidden divide-y divide-slate-200">
                         @foreach($memberAssignments as $index => $assignment)
+                            @php
+                                $doneChecklist = $assignment->checklists->where('is_done', true)->count();
+                                $totalChecklist = $assignment->checklists->count();
+                                $assignmentStatus = $totalChecklist > 0
+                                    ? ($doneChecklist >= $totalChecklist ? 'done' : ($doneChecklist > 0 ? 'progress' : 'pending'))
+                                    : 'pending';
+                                $assignmentStatusLabel = $assignmentStatus === 'done' ? 'Done' : ($assignmentStatus === 'progress' ? 'On Progress' : 'Pending');
+                                $assignmentStatusClass = $assignmentStatus === 'done'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : ($assignmentStatus === 'progress' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
+                            @endphp
                             <div class="p-4">
                                 <button onclick="toggleDropdown('sup-mob-{{ $member->id }}-{{ $index }}')" class="w-full text-left">
                                     <div class="flex items-start justify-between gap-3 mb-3">
@@ -297,15 +322,16 @@
                                     <div class="flex flex-col gap-1.5 mb-3">
                                         <div class="flex justify-between items-center">
                                             <span class="text-xs font-semibold text-slate-600">Progress</span>
-                                            <span class="text-xs text-slate-500">{{ $assignment->checklists->where('is_done',true)->count() }}/{{ $assignment->checklists->count() }}</span>
+                                            <span class="text-xs text-slate-500">{{ $doneChecklist }}/{{ $totalChecklist }}</span>
                                         </div>
                                         <div class="w-full bg-slate-200 rounded-full h-1.5">
                                             <div class="bg-emerald-500 h-1.5 rounded-full"
-                                                style="width:{{ $assignment->checklists->count() > 0 ? ($assignment->checklists->where('is_done',true)->count() / $assignment->checklists->count() * 100) : 0 }}%"></div>
+                                                style="width:{{ $totalChecklist > 0 ? ($doneChecklist / $totalChecklist * 100) : 0 }}%"></div>
                                         </div>
                                     </div>
                                     <div class="flex flex-wrap gap-2">
-                                        <span class="rounded-full bg-indigo-100 px-2 py-1 text-xs font-semibold text-indigo-700">{{ $assignment->checklists->count() }} Items</span>
+                                        <span class="rounded-full bg-indigo-100 px-2 py-1 text-xs font-semibold text-indigo-700">{{ $totalChecklist }} Items</span>
+                                        <span class="rounded-full px-2 py-1 text-xs font-semibold {{ $assignmentStatusClass }}">{{ $assignmentStatusLabel }}</span>
                                         @if($assignment->deadline)
                                             <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{{ \Carbon\Carbon::parse($assignment->deadline)->format('d M Y') }}</span>
                                         @endif

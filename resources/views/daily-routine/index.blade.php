@@ -292,7 +292,7 @@ $overdue = strtolower($routine->deadline) === $today
                                                     title="Edit Routine">
                                                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.75 20.25H3v-3.75L16.862 4.487Z" />
+                                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                                                     </svg>
                                                 </button>
                                                 <span class="tooltip-text">Edit Routine</span>
@@ -745,7 +745,9 @@ $overdue = strtolower($routine->deadline) === $today
                         <h2 id="drModalTitle" class="text-2xl font-black text-slate-900">Create Daily Routine</h2>
                     </div>
                     <button onclick="hideDailyRoutineForm()"
-                        class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center text-slate-600 text-xl">✕</button>
+                        class="inline-flex w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 transition items-center justify-center text-slate-600">
+                        <x-icon name="close" class="w-5 h-5" />
+                    </button>
                 </div>
                 <div class="overflow-y-auto flex-1 p-6 space-y-5">
                     <input type="hidden" id="drRoutineId" value="">
@@ -859,7 +861,9 @@ $overdue = strtolower($routine->deadline) === $today
                 <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
                     <h2 class="text-lg font-black text-slate-900">Reassign Routine</h2>
                     <button onclick="closeReassignModal()"
-                        class="w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600">✕</button>
+                        class="inline-flex w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 items-center justify-center text-slate-600">
+                        <x-icon name="close" class="w-4 h-4" />
+                    </button>
                 </div>
                 <div class="p-6">
                     <input type="hidden" id="reassignRoutineId">
@@ -893,7 +897,9 @@ $overdue = strtolower($routine->deadline) === $today
                     <h2 class="text-xl font-black text-slate-900">Batalkan Checklist</h2>
                 </div>
                 <button onclick="hideDrUncheckModal()"
-                    class="rounded-full bg-slate-100 p-2 hover:bg-slate-200 transition">✕</button>
+                    class="inline-flex rounded-full bg-slate-100 p-2 hover:bg-slate-200 transition items-center justify-center">
+                    <x-icon name="close" class="w-4 h-4" />
+                </button>
             </div>
             <div class="p-6 space-y-4">
                 <div class="bg-violet-50 border border-violet-100 rounded-2xl px-4 py-3">

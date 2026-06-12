@@ -359,7 +359,9 @@
                         <p class="text-sm text-slate-500 mt-1">Update title, status, priority, and project members.</p>
                     </div>
                     <button type="button" onclick="closeEditTaskModal()"
-                        class="w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 transition shrink-0">✕</button>
+                        class="inline-flex w-11 h-11 items-center justify-center rounded-2xl bg-slate-100 hover:bg-slate-200 transition shrink-0">
+                        <x-icon name="close" class="w-5 h-5" />
+                    </button>
                 </div>
             </div>
 

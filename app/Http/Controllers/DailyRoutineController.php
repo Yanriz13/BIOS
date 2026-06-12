@@ -334,6 +334,8 @@ public function checklistToggle(Request $request, int $checklistId)
 
     $checklist->update($updateData);
 
+    $this->syncRoutineStatus((int) $checklist->daily_routine_id);
+
     return response()->json([
         'success' => true,
         'is_done' => $checklist->is_done,
@@ -364,6 +366,8 @@ $checklist->update([
     'uncheck_reason' => $request->reason,
 ]);
 
+        $this->syncRoutineStatus((int) $checklist->daily_routine_id);
+
         return response()->json(['success' => true, 'message' => 'Checklist dibatalkan.']);
     }
 
@@ -372,10 +376,13 @@ $checklist->update([
     public function checklistDestroy(int $checklistId): JsonResponse
     {
         $checklist = DailyRoutineChecklist::findOrFail($checklistId);
+        $routineId = (int) $checklist->daily_routine_id;
         if ($checklist->file_path) {
             \Storage::disk('public')->delete($checklist->file_path);
         }
         $checklist->delete();
+
+        $this->syncRoutineStatus($routineId);
 
         return response()->json(['success' => true, 'message' => 'Checklist item dihapus.']);
     }
@@ -468,6 +475,8 @@ $today = $mapDays[now()->format('l')];
     'address'   => $request->address,
 ]);
 
+        $this->syncRoutineStatus((int) $checklist->daily_routine_id);
+
         return response()->json([
             'success' => true,
             'message' => 'File berhasil diupload.',
@@ -495,10 +504,47 @@ $today = $mapDays[now()->format('l')];
     'address' => null,
 ]);
 
+        $this->syncRoutineStatus((int) $checklist->daily_routine_id);
+
         return response()->json([
             'success' => true,
             'message' => 'File berhasil dihapus.',
         ]);
+    }
+
+    private function syncRoutineStatus(int $routineId): void
+    {
+        if ($routineId <= 0) {
+            return;
+        }
+
+        $routine = DailyRoutine::withCount([
+            'checklists as total_checklists',
+            'checklists as done_checklists' => function ($query) {
+                $query->where('is_done', 1);
+            },
+        ])->find($routineId);
+
+        if (!$routine) {
+            return;
+        }
+
+        $totalChecklist = (int) $routine->total_checklists;
+        $doneChecklist = (int) $routine->done_checklists;
+
+        if ($totalChecklist <= 0) {
+            $newStatus = 'pending';
+        } elseif ($doneChecklist >= $totalChecklist) {
+            $newStatus = 'done';
+        } elseif ($doneChecklist > 0) {
+            $newStatus = 'progress';
+        } else {
+            $newStatus = 'pending';
+        }
+
+        if ($routine->status !== $newStatus) {
+            $routine->update(['status' => $newStatus]);
+        }
     }
     public function history(): View
     {

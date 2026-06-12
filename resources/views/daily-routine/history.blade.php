@@ -20,7 +20,8 @@
             <a href="{{ route('daily-routine.index') }}"
                 class="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-slate-800 text-white hover:bg-slate-700 transition shadow-sm">
 
-                ← Kembali
+                <x-icon name="back" class="w-4 h-4" />
+                <span>Kembali</span>
 
             </a>
 

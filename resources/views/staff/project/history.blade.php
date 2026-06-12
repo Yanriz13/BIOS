@@ -22,7 +22,8 @@
             <a href="{{ route('daily-routine.index') }}"
                 class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-800 text-white hover:bg-slate-700 transition shadow-sm text-sm font-medium w-full sm:w-auto">
 
-                ← Kembali
+                <x-icon name="back" class="w-4 h-4" />
+                <span>Kembali</span>
 
             </a>
 
@@ -322,7 +323,8 @@
                                                         target="_blank"
                                                         class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition">
 
-                                                        👁️ Lihat
+                                                        <x-icon name="eye" class="w-4 h-4" />
+                                                        <span>Lihat</span>
 
                                                     </a>
 
@@ -330,7 +332,8 @@
                                                         download
                                                         class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition">
 
-                                                        ⬇ Download
+                                                        <x-icon name="download" class="w-4 h-4" />
+                                                        <span>Download</span>
 
                                                     </a>
 

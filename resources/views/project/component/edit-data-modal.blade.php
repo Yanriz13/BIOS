@@ -10,7 +10,9 @@
                 <p class="text-xs uppercase tracking-[0.2em] text-slate-400 font-semibold">Edit Data</p>
                 <h2 id="editDataTitle" class="text-2xl font-black text-slate-900">Edit Data</h2>
             </div>
-            <button type="button" id="editDataCloseButton" class="rounded-full bg-slate-100 px-3 py-2 text-slate-600 hover:bg-slate-200 transition text-xl leading-none">✕</button>
+            <button type="button" id="editDataCloseButton" class="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-2 text-slate-600 hover:bg-slate-200 transition">
+                <x-icon name="close" class="w-5 h-5" />
+            </button>
         </div>
 
         <div class="px-6 pt-5">

@@ -6,9 +6,6 @@
             © {{ date('Y') }} BIOS Dashboard
         </p>
 
-        <p class="text-sm text-slate-400">
-            Built with Laravel • TailwindCSS
-        </p>
 
     </div>
 

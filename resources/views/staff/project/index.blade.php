@@ -72,7 +72,7 @@
 
                 {{-- ── Desktop Table ── --}}
                 <div class="hidden md:block overflow-x-auto">
-                    <table class="w-full">
+                    <table class="w-full" data-disable-table-tools="true">
                         <thead class="bg-slate-50 border-b border-slate-200">
                             <tr>
                                 <th class="px-6 py-4 text-left text-sm font-semibold text-slate-700">Judul Routine</th>
@@ -86,6 +86,20 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             @foreach($routines as $index => $routine)
+                                @php
+                                    $total = $routine->checklists->count();
+                                    $done = $routine->checklists->where('is_done', true)->count();
+                                    $pct = $total > 0 ? round($done / $total * 100) : 0;
+                                    $derivedStatus = $total > 0
+                                        ? ($done >= $total ? 'done' : ($done > 0 ? 'progress' : 'pending'))
+                                        : 'pending';
+                                    $statusClass = match ($derivedStatus) {
+                                        'progress' => 'bg-blue-100 text-blue-700 border-blue-200',
+                                        'done' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                        default => 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                                    };
+                                    $statusLabel = $derivedStatus === 'progress' ? 'On Progress' : ucfirst($derivedStatus);
+                                @endphp
                                 <tr class="hover:bg-slate-50 transition">
                                     <td class="px-6 py-4">
                                         <p class="text-sm font-semibold text-slate-900">{{ $routine->title }}</p>
@@ -98,8 +112,8 @@
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <span
-                                            class="inline-block rounded-full border px-3 py-1 text-xs font-semibold {{ $routine->status_color }}">
-                                            {{ ucfirst($routine->status) }}
+                                            class="inline-block rounded-full border px-3 py-1 text-xs font-semibold {{ $statusClass }}">
+                                            {{ $statusLabel }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-center">
@@ -111,11 +125,6 @@
                                     <td class="px-6 py-4">
                                         <div class="flex flex-col items-center gap-2">
                                             <div class="w-full bg-slate-200 rounded-full h-2 max-w-xs">
-                                                @php
-                                                    $total = $routine->checklists->count();
-                                                    $done = $routine->checklists->where('is_done', true)->count();
-                                                    $pct = $total > 0 ? round($done / $total * 100) : 0;
-                                                @endphp
                                                 <div class="bg-emerald-500 h-2 rounded-full" style="width: {{ $pct }}%"></div>
                                             </div>
                                             <p class="text-xs text-slate-500">{{ $done }}/{{ $total }}</p>
@@ -340,9 +349,18 @@
                                 $total = $routine->checklists->count();
                                 $done = $routine->checklists->where('is_done', true)->count();
                                 $pct = $total > 0 ? round($done / $total * 100) : 0;
+                                $derivedStatus = $total > 0
+                                    ? ($done >= $total ? 'done' : ($done > 0 ? 'progress' : 'pending'))
+                                    : 'pending';
+                                $statusClass = match ($derivedStatus) {
+                                    'progress' => 'bg-blue-100 text-blue-700 border-blue-200',
+                                    'done' => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                    default => 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                                };
+                                $statusLabel = $derivedStatus === 'progress' ? 'On Progress' : ucfirst($derivedStatus);
                             @endphp
                             <div class="dr-mobile-card p-4" data-title="{{ strtolower($routine->title) }}"
-                                data-status="{{ $routine->status }}"
+                                data-status="{{ $derivedStatus }}"
                                 data-checklist-titles="{{ strtolower($routine->checklists->pluck('title')->join(' ')) }}"
                                 data-done-count="{{ $done }}" data-total-count="{{ $total }}">
 
@@ -352,8 +370,8 @@
                                         <div class="min-w-0 flex-1">
                                             <h3 class="text-sm font-bold text-slate-900">{{ $routine->title }}</h3>
                                             <span
-                                                class="inline-block mt-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $routine->status_color }}">
-                                                {{ ucfirst($routine->status) }}
+                                                class="inline-block mt-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $statusClass }}">
+                                                {{ $statusLabel }}
                                             </span>
                                         </div>
                                         <svg id="dr-mobile-icon-{{ $index }}"
@@ -438,88 +456,97 @@
                                 {{-- Expandable Checklist --}}
                                 <div id="dr-mobile-dropdown-{{ $index }}" class="hidden mt-4 pt-4 border-t border-slate-200">
                                     <p class="text-xs font-semibold text-slate-700 mb-3">Checklist Items:</p>
-                                    <div class="space-y-2">
+                                    <div class="space-y-3">
                                         @forelse($routine->checklists as $checklist)
-                                            <div class="flex flex-row items-center gap-2">
+                                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
 
                                                 <label
-                                                    class="flex flex-1 items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-violet-200 hover:bg-violet-50 transition cursor-pointer min-w-0"
+                                                    class="block cursor-pointer"
                                                     onclick="handleDrChecklistClick(event, {{ $checklist->id }}, {{ $checklist->is_done ? 'true' : 'false' }}, {{ $checklist->file_path ? 'true' : 'false' }})">
 
-                                                    <div class="h-4 w-4 rounded border-2 flex-shrink-0 flex items-center justify-center
-                                                                    {{ $checklist->is_done ? 'bg-violet-600 border-violet-600' : 'border-slate-300 bg-white' }}"
-                                                        id="dr-checkbox-visual-{{ $checklist->id }}">
-                                                        @if($checklist->is_done)
-                                                            <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor"
-                                                                viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
-                                                                    d="M5 13l4 4L19 7"></path>
-                                                            </svg>
-                                                        @endif
+                                                    <div class="flex items-start gap-2.5 min-w-0">
+                                                        <div class="h-4 w-4 mt-0.5 rounded border-2 flex-shrink-0 flex items-center justify-center
+                                                                        {{ $checklist->is_done ? 'bg-violet-600 border-violet-600' : 'border-slate-300 bg-white' }}"
+                                                            id="dr-checkbox-visual-{{ $checklist->id }}">
+                                                            @if($checklist->is_done)
+                                                                <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                                        d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+                                                            @endif
+                                                        </div>
+
+                                                        <div
+                                                            class="flex h-6 w-6 mt-0.5 items-center justify-center rounded-full flex-shrink-0 text-xs
+                                                                        {{ $checklist->is_done ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-400' }}">
+                                                            @if($checklist->is_done) ✓ @else ○ @endif
+                                                        </div>
+
+                                                        <div class="min-w-0 flex-1">
+                                                            <p
+                                                                class="text-xs font-semibold leading-relaxed break-words {{ $checklist->is_done ? 'text-slate-500 line-through' : 'text-slate-800' }}">
+                                                                {{ $checklist->title }}
+                                                            </p>
+                                                            <p
+                                                                class="mt-0.5 text-[11px] {{ $checklist->is_done ? 'text-emerald-600' : 'text-slate-500' }}">
+                                                                {{ $checklist->is_done ? 'Selesai' : 'Menunggu' }}
+                                                            </p>
+
+                                                            <span
+                                                                class="mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold
+                                                                            {{ $checklist->is_done ? 'bg-slate-200 text-slate-600' : 'bg-violet-100 text-violet-700' }}">
+                                                                {{ $checklist->is_done ? 'Batalkan' : 'Selesaikan' }}
+                                                            </span>
+                                                        </div>
                                                     </div>
-
-                                                    <div
-                                                        class="flex h-6 w-6 items-center justify-center rounded-full flex-shrink-0 text-xs
-                                                                    {{ $checklist->is_done ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-400' }}">
-                                                        @if($checklist->is_done) ✓ @else ○ @endif
-                                                    </div>
-
-                                                    <div class="min-w-0 flex-1">
-                                                        <p
-                                                            class="text-xs font-semibold {{ $checklist->is_done ? 'text-slate-500 line-through' : 'text-slate-800' }} truncate">
-                                                            {{ $checklist->title }}
-                                                        </p>
-                                                        <p
-                                                            class="text-xs {{ $checklist->is_done ? 'text-emerald-600' : 'text-slate-500' }}">
-                                                            {{ $checklist->is_done ? 'Selesai' : 'Menunggu' }}
-                                                        </p>
-
-                                                        @if(!$checklist->is_done && $checklist->uncheck_reason)
-                                                            <div
-                                                                class="mt-1 flex items-start gap-1 rounded-lg bg-red-50 border border-red-100 px-2 py-1.5">
-                                                                <span class="text-red-400 text-xs shrink-0">⚠</span>
-                                                                <p class="text-xs text-red-500 leading-relaxed">
-                                                                    {{ $checklist->uncheck_reason }}</p>
-                                                            </div>
-                                                        @endif
-
-                                                        @if($checklist->file_path)
-                                                            <div class="mt-1.5 flex items-center gap-1.5">
-                                                                @if(str_starts_with($checklist->file_type ?? '', 'image/'))
-                                                                    <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
-                                                                        onclick="event.stopPropagation()"
-                                                                        class="block rounded overflow-hidden border border-slate-200 w-10 h-10 flex-shrink-0">
-                                                                        <img src="{{ Storage::url($checklist->file_path) }}" alt="Bukti"
-                                                                            class="w-full h-full object-cover">
-                                                                    </a>
-                                                                @else
-                                                                    <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
-                                                                        onclick="event.stopPropagation()"
-                                                                        class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 max-w-[90px] truncate">
-                                                                        📎 {{ Str::limit($checklist->file_name ?? 'File', 10) }}
-                                                                    </a>
-                                                                @endif
-                                                                <button type="button"
-                                                                    onclick="event.stopPropagation(); deleteDrChecklistFile({{ $checklist->id }})"
-                                                                    class="rounded-full bg-red-100 p-1 text-red-500 hover:bg-red-200 transition flex-shrink-0">
-                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                                        viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                                    </svg>
-                                                                </button>
-                                                            </div>
-                                                        @else
-                                                            <p class="text-xs text-amber-600 mt-0.5">⚠ Belum ada bukti</p>
-                                                        @endif
-                                                    </div>
-
-                                                    <span
-                                                        class="rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0
-                                                                    {{ $checklist->is_done ? 'bg-slate-100 text-slate-600' : 'bg-violet-100 text-violet-700' }}">
-                                                        {{ $checklist->is_done ? 'Batal' : 'Selesai' }}
-                                                    </span>
                                                 </label>
+
+                                                @if(!$checklist->is_done && $checklist->uncheck_reason)
+                                                    <div
+                                                        class="mt-2 flex items-start gap-1.5 rounded-xl bg-red-50 border border-red-100 px-2.5 py-2">
+                                                        <span class="text-red-400 text-xs shrink-0 mt-0.5">⚠</span>
+                                                        <p class="text-[11px] text-red-500 leading-relaxed break-words">
+                                                            {{ $checklist->uncheck_reason }}</p>
+                                                    </div>
+                                                @endif
+
+                                                <div class="mt-2.5">
+                                                    @if($checklist->file_path)
+                                                        <div class="flex flex-wrap items-center gap-2">
+                                                            @if(str_starts_with($checklist->file_type ?? '', 'image/'))
+                                                                <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
+                                                                    onclick="event.stopPropagation()"
+                                                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 max-w-full">
+                                                                    <img src="{{ Storage::url($checklist->file_path) }}" alt="Bukti"
+                                                                        class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
+                                                                    <span class="text-[11px] font-medium text-slate-600 break-all leading-snug">
+                                                                        {{ Str::limit($checklist->file_name ?? 'image', 20) }}
+                                                                    </span>
+                                                                </a>
+                                                            @else
+                                                                <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
+                                                                    onclick="event.stopPropagation()"
+                                                                    class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-2.5 py-2 text-[11px] font-medium text-slate-700 max-w-full break-all leading-snug">
+                                                                    📎 {{ Str::limit($checklist->file_name ?? 'File', 28) }}
+                                                                </a>
+                                                            @endif
+
+                                                            <button type="button"
+                                                                onclick="event.stopPropagation(); deleteDrChecklistFile({{ $checklist->id }})"
+                                                                class="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-100 transition">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                                    viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                        stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                </svg>
+                                                                Hapus File
+                                                            </button>
+                                                        </div>
+                                                    @else
+                                                        <p class="text-[11px] text-amber-600">⚠ Belum ada bukti</p>
+                                                    @endif
+                                                </div>
 
                                                 <form id="dr-uncheck-form-{{ $checklist->id }}" method="POST"
                                                     action="{{ route('daily-routine.checklist.toggle', $checklist->id) }}"
@@ -1278,8 +1305,8 @@ formData.append('address', drCurrentLocation.address);
 
                 let matchFilter = true;
                 if      (drMobileActiveFilter === 'done')     matchFilter = totalCount > 0 && doneCount === totalCount;
-                else if (drMobileActiveFilter === 'pending')  matchFilter = status === 'pending';
-                else if (drMobileActiveFilter === 'progress') matchFilter = status === 'progress';
+                else if (drMobileActiveFilter === 'pending')  matchFilter = doneCount === 0;
+                else if (drMobileActiveFilter === 'progress') matchFilter = doneCount > 0 && doneCount < totalCount;
 
                 if (matchSearch && matchFilter) {
                     card.classList.remove('hidden');

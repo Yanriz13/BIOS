@@ -16,27 +16,56 @@ class ProjectController extends Controller
     {
         $divisi = auth()->user()->divisi;
 
+        $tasks = Task::with(['users', 'assignments.checklists'])
+            ->where('divisi', $divisi)
+            ->latest()
+            ->get();
+
+        $resolveTaskStatus = function (Task $task): string {
+            $rawStatus = $task->getRawOriginal('status');
+
+            if ($rawStatus === 'reject') {
+                return 'reject';
+            }
+
+            $totalChecklist = 0;
+            $doneChecklist = 0;
+
+            foreach ($task->assignments as $assignment) {
+                $totalChecklist += $assignment->checklists->count();
+                $doneChecklist += $assignment->checklists->where('is_done', 1)->count();
+            }
+
+            if ($totalChecklist > 0) {
+                if ($doneChecklist >= $totalChecklist) {
+                    return 'done';
+                }
+
+                if ($doneChecklist > 0) {
+                    return 'progress';
+                }
+
+                return 'pending';
+            }
+
+            return in_array($rawStatus, ['pending', 'progress', 'done'], true)
+                ? $rawStatus
+                : 'pending';
+        };
+
+        $tasks = $tasks->map(function (Task $task) use ($resolveTaskStatus) {
+            $task->setAttribute('status', $resolveTaskStatus($task));
+            return $task;
+        });
+
         return view('project.index', [
+            'pendingTasks' => $tasks->filter(fn($task) => $task->status === 'pending')->values(),
 
-            'pendingTasks' => Task::where('status', 'pending')
-                ->where('divisi', $divisi)
-                ->latest()
-                ->get(),
+            'progressTasks' => $tasks->filter(fn($task) => $task->status === 'progress')->values(),
 
-            'progressTasks' => Task::where('status', 'progress')
-                ->where('divisi', $divisi)
-                ->latest()
-                ->get(),
+            'doneTasks' => $tasks->filter(fn($task) => $task->status === 'done')->values(),
 
-            'doneTasks' => Task::where('status', 'done')
-                ->where('divisi', $divisi)
-                ->latest()
-                ->get(),
-
-            'rejectTasks' => Task::where('status', 'reject')
-                ->where('divisi', $divisi)
-                ->latest()
-                ->get(),
+            'rejectTasks' => $tasks->filter(fn($task) => $task->status === 'reject')->values(),
 
             'users' => User::where('role', 'staff')
                 ->where('divisi', $divisi)
@@ -158,13 +187,53 @@ class ProjectController extends Controller
             ->latest()
             ->get();
 
+        $memberIds = $task->users->pluck('id')
+            ->merge($allDrafts->pluck('user_id')->filter())
+            ->unique()
+            ->values();
+
+        $overviewMemberCount = $memberIds->count();
+        $overviewTaskCount = $allDrafts->count();
+        $overviewChecklistCount = (int) $allDrafts->sum(function ($draft) {
+            return $draft->checklists->count();
+        });
+
+        $completionPercents = $allDrafts
+            ->map(function ($draft) {
+                $total = $draft->checklists->count();
+                if ($total <= 0) {
+                    return null;
+                }
+
+                $done = $draft->checklists->where('is_done', 1)->count();
+                return ($done / $total) * 100;
+            })
+            ->filter(function ($value) {
+                return $value !== null;
+            })
+            ->values();
+
+        $overviewAvgProgress = $completionPercents->count() > 0
+            ? (int) round($completionPercents->avg())
+            : 0;
+
         $taskChatUnread = ChatNotification::where('user_id', auth()->id())
             ->where('task_id', $id)->where('is_read', false)->count();
 
         $globalChatUnread = ChatNotification::where('user_id', auth()->id())
             ->whereNull('task_id')->where('is_read', false)->count();
 
-        return view('project.detail', compact('task', 'assignments', 'allDrafts', 'taskChatUnread', 'globalChatUnread'))
+        return view('project.detail', compact(
+            'task',
+            'assignments',
+            'allDrafts',
+            'taskChatUnread',
+            'globalChatUnread',
+            'overviewMemberCount',
+            'overviewTaskCount',
+            'overviewChecklistCount',
+            'overviewAvgProgress'
+        ))
             ->with(
                 'users',
                 User::where('role', 'staff')
@@ -218,6 +287,8 @@ class ProjectController extends Controller
         $checklist->update([
             'is_done' => $request->has('is_done')
         ]);
+
+        $this->syncAssignmentStatus($checklist->task_assignment_id);
 
         return redirect()->back()
             ->with('success', 'Checklist berhasil diperbarui');
@@ -608,6 +679,8 @@ public function uploadChecklistFile(Request $request, $id)
         'address'        => $request->address,
     ]);
 
+    $this->syncAssignmentStatus($checklist->task_assignment_id);
+
     return response()->json([
         'success' => true,
         'message' => 'File berhasil diupload dan checklist ditandai selesai.',
@@ -632,6 +705,8 @@ public function deleteChecklistFile($id)
         'address'    => null,
     ]);
 
+    $this->syncAssignmentStatus($checklist->task_assignment_id);
+
     return response()->json(['success' => true, 'message' => 'File berhasil dihapus.']);
 }
     public function managerUncheck(Request $request, $id)
@@ -654,9 +729,96 @@ public function deleteChecklistFile($id)
             'uncheck_reason' => $request->reason,
         ]);
 
+        $this->syncAssignmentStatus($checklist->task_assignment_id);
+
         return response()->json([
             'success' => true,
             'message' => 'Checklist berhasil dibatalkan dan file dihapus.',
         ]);
+    }
+
+    private function syncAssignmentStatus(?int $assignmentId): void
+    {
+        if (!$assignmentId) {
+            return;
+        }
+
+        $assignment = TaskAssignment::withCount([
+            'checklists as total_checklists',
+            'checklists as done_checklists' => function ($query) {
+                $query->where('is_done', 1);
+            },
+        ])->find($assignmentId);
+
+        if (!$assignment) {
+            return;
+        }
+
+        $taskId = (int) $assignment->task_id;
+
+        // Keep manual reject state untouched.
+        if ($assignment->getRawOriginal('status') === 'reject') {
+            $this->syncTaskStatus($taskId);
+            return;
+        }
+
+        $totalChecklist = (int) $assignment->total_checklists;
+        $doneChecklist = (int) $assignment->done_checklists;
+
+        if ($totalChecklist <= 0) {
+            $newStatus = 'pending';
+        } elseif ($doneChecklist >= $totalChecklist) {
+            $newStatus = 'done';
+        } elseif ($doneChecklist > 0) {
+            $newStatus = 'progress';
+        } else {
+            $newStatus = 'pending';
+        }
+
+        if ($assignment->getRawOriginal('status') !== $newStatus) {
+            $assignment->update(['status' => $newStatus]);
+        }
+
+        $this->syncTaskStatus($taskId);
+    }
+
+    private function syncTaskStatus(int $taskId): void
+    {
+        if ($taskId <= 0) {
+            return;
+        }
+
+        $task = Task::find($taskId);
+
+        if (!$task) {
+            return;
+        }
+
+        // Keep manual reject state untouched.
+        if ($task->getRawOriginal('status') === 'reject') {
+            return;
+        }
+
+        $totalChecklist = TaskChecklist::whereHas('assignment', function ($query) use ($taskId) {
+            $query->where('task_id', $taskId);
+        })->count();
+
+        $doneChecklist = TaskChecklist::whereHas('assignment', function ($query) use ($taskId) {
+            $query->where('task_id', $taskId);
+        })->where('is_done', 1)->count();
+
+        if ($totalChecklist <= 0) {
+            $newStatus = 'pending';
+        } elseif ($doneChecklist >= $totalChecklist) {
+            $newStatus = 'done';
+        } elseif ($doneChecklist > 0) {
+            $newStatus = 'progress';
+        } else {
+            $newStatus = 'pending';
+        }
+
+        if ($task->getRawOriginal('status') !== $newStatus) {
+            $task->update(['status' => $newStatus]);
+        }
     }
 }

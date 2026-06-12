@@ -104,16 +104,20 @@
                                     $clTotal = $routine->checklists->count();
                                     $clDone  = $routine->checklists->where('is_done', true)->count();
                                     $pct     = $clTotal > 0 ? round(($clDone / $clTotal) * 100) : 0;
-                                    $statusColor = match($routine->status) {
+                                    $derivedStatus = $clTotal > 0
+                                        ? ($clDone >= $clTotal ? 'done' : ($clDone > 0 ? 'progress' : 'pending'))
+                                        : 'pending';
+                                    $statusColor = match($derivedStatus) {
                                         'progress' => 'bg-blue-50 text-blue-700 border-blue-200',
                                         'done'     => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                                         default    => 'bg-yellow-50 text-yellow-700 border-yellow-200',
                                     };
-                                    $barClass = match($routine->status) {
+                                    $barClass = match($derivedStatus) {
                                         'progress' => 'bg-blue-400',
                                         'done'     => 'bg-emerald-400',
                                         default    => 'bg-violet-400',
                                     };
+                                    $statusLabel = $derivedStatus === 'progress' ? 'On Progress' : ucfirst($derivedStatus);
                                     $shortDays = ['senin'=>'Sen','selasa'=>'Sel','rabu'=>'Rab','kamis'=>'Kam','jumat'=>'Jum','sabtu'=>'Sab','minggu'=>'Min'];
                                     $dayColors = ['senin'=>'bg-blue-100 text-blue-700','selasa'=>'bg-emerald-100 text-emerald-700','rabu'=>'bg-violet-100 text-violet-700','kamis'=>'bg-amber-100 text-amber-700','jumat'=>'bg-rose-100 text-rose-700','sabtu'=>'bg-cyan-100 text-cyan-700','minggu'=>'bg-slate-200 text-slate-700'];
                                     $days = array_map('trim', explode(',', $routine->deadline ?? ''));
@@ -132,7 +136,7 @@
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         <span class="inline-block rounded-full border px-3 py-1 text-xs font-semibold {{ $statusColor }}">
-                                            {{ ucfirst($routine->status) }}
+                                            {{ $statusLabel }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-center">
@@ -305,11 +309,15 @@
                                 $clTotal = $routine->checklists->count();
                                 $clDone  = $routine->checklists->where('is_done', true)->count();
                                 $pct     = $clTotal > 0 ? round(($clDone / $clTotal) * 100) : 0;
-                                $statusColor = match($routine->status) {
+                                $derivedStatus = $clTotal > 0
+                                    ? ($clDone >= $clTotal ? 'done' : ($clDone > 0 ? 'progress' : 'pending'))
+                                    : 'pending';
+                                $statusColor = match($derivedStatus) {
                                     'progress' => 'bg-blue-50 text-blue-700 border-blue-200',
                                     'done'     => 'bg-emerald-50 text-emerald-700 border-emerald-200',
                                     default    => 'bg-yellow-50 text-yellow-700 border-yellow-200',
                                 };
+                                $statusLabel = $derivedStatus === 'progress' ? 'On Progress' : ucfirst($derivedStatus);
                                 $shortDays = ['senin'=>'Sen','selasa'=>'Sel','rabu'=>'Rab','kamis'=>'Kam','jumat'=>'Jum','sabtu'=>'Sab','minggu'=>'Min'];
                                 $dayColors = ['senin'=>'bg-blue-100 text-blue-700','selasa'=>'bg-emerald-100 text-emerald-700','rabu'=>'bg-violet-100 text-violet-700','kamis'=>'bg-amber-100 text-amber-700','jumat'=>'bg-rose-100 text-rose-700','sabtu'=>'bg-cyan-100 text-cyan-700','minggu'=>'bg-slate-200 text-slate-700'];
                                 $days = array_map('trim', explode(',', $routine->deadline ?? ''));
@@ -318,7 +326,7 @@
 
                             <div class="spv-mobile-card-{{ $member->id }} p-4"
                                 data-title="{{ strtolower($routine->title) }}"
-                                data-status="{{ $routine->status }}"
+                                data-status="{{ $derivedStatus }}"
                                 data-checklist-titles="{{ strtolower($routine->checklists->pluck('title')->join(' ')) }}"
                                 data-done-count="{{ $clDone }}"
                                 data-total-count="{{ $clTotal }}">
@@ -328,7 +336,7 @@
                                         <div class="min-w-0 flex-1">
                                             <h3 class="text-sm font-bold text-slate-900">{{ $routine->title }}</h3>
                                             <span class="inline-block mt-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $statusColor }}">
-                                                {{ ucfirst($routine->status) }}
+                                                {{ $statusLabel }}
                                             </span>
                                         </div>
                                         <svg id="{{ $mobileKey }}-icon" class="w-5 h-5 text-slate-400 transition-transform flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -492,7 +500,9 @@
                 <h2 class="text-2xl font-black text-slate-900">Create Daily Routine</h2>
             </div>
             <button onclick="hideDailyRoutineForm()"
-                class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center text-slate-600 text-xl">✕</button>
+                class="inline-flex w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 transition items-center justify-center text-slate-600">
+                <x-icon name="close" class="w-5 h-5" />
+            </button>
         </div>
         <div class="overflow-y-auto flex-1 p-6 space-y-5">
             <div>
@@ -551,7 +561,7 @@
         class="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl border border-slate-200">
         <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
             <h2 class="text-xl font-black text-slate-900">Batalkan Checklist</h2>
-            <button onclick="closeDrUncheckModal()" class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 transition text-xl flex items-center justify-center">✕</button>
+            <button onclick="closeDrUncheckModal()" class="inline-flex w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 transition items-center justify-center text-slate-600"><x-icon name="close" class="w-5 h-5" /></button>
         </div>
         <div class="p-6 space-y-4">
             <div class="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3">
@@ -752,8 +762,8 @@ function filterSpvMobileCards(memberId) {
         const matchSearch = !query || title.includes(query) || clTitles.includes(query);
         let matchFilter   = true;
         if      (filter === 'done')     matchFilter = total > 0 && done === total;
-        else if (filter === 'pending')  matchFilter = status === 'pending';
-        else if (filter === 'progress') matchFilter = status === 'progress';
+        else if (filter === 'pending')  matchFilter = done === 0;
+        else if (filter === 'progress') matchFilter = done > 0 && done < total;
 
         if (matchSearch && matchFilter) { card.classList.remove('hidden'); visible++; }
         else card.classList.add('hidden');

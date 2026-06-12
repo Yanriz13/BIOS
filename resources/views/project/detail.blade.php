@@ -18,7 +18,7 @@
 
                         <a href="{{ url()->previous() }}"
                             class="w-14 h-14 rounded-3xl bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center text-xl font-bold shadow-sm">
-                            ←
+                            <x-icon name="back" class="w-6 h-6" />
                         </a>
 
                         <div>
@@ -58,10 +58,10 @@
                         </span>
 
 
-                        <button type="button" onclick="openGroupChat({{ $task->id }}, '{{ addslashes($task->title) }}')"
+                        <!-- <button type="button" onclick="openGroupChat({{ $task->id }}, '{{ addslashes($task->title) }}')"
                             class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-semibold transition shadow-lg shadow-indigo-100">
                             Chat Semua
-                        </button>
+                        </button> -->
 
                     </div>
 
@@ -124,7 +124,7 @@
                     </div>
                     <div>
                         <p class="text-xs text-slate-400 font-medium mb-1">Members</p>
-                        <p class="font-semibold text-slate-800 text-2xl leading-none">{{ $task->users->count() }}</p>
+                        <p class="font-semibold text-slate-800 text-2xl leading-none">{{ $overviewMemberCount }}</p>
                     </div>
                 </div>
 
@@ -137,8 +137,25 @@
                         </svg>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="text-xs text-slate-400 font-medium mb-1">Description</p>
-                        <p class="text-sm text-slate-600 leading-relaxed line-clamp-2">{{ $task->description ?? '-' }}</p>
+                        <p class="text-xs text-slate-400 font-medium mb-1">Avg Pengerjaan/Task</p>
+                        <p class="font-semibold text-slate-800 text-2xl leading-none">{{ $overviewAvgProgress }}%</p>
+                        <p class="text-[11px] text-slate-500 mt-1">Rata-rata progress dari semua draft task</p>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-sky-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h12m-9-6h9m-9 3h9m2.25 7.5H6a2.25 2.25 0 0 1-2.25-2.25V6A2.25 2.25 0 0 1 6 3.75h9.75" />
+                        </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs text-slate-400 font-medium mb-1">Total Task & Checklist</p>
+                        <p class="font-semibold text-slate-800 text-lg leading-none">
+                            {{ $overviewTaskCount }} Task • {{ $overviewChecklistCount }} Checklist
+                        </p>
                     </div>
                 </div>
 
@@ -289,7 +306,7 @@
                                                             onclick="event.stopPropagation(); openEditDataModal('draft', { id: {{ $draft->id }}, userId: @js($draft->user_id ?? ''), description: @js($draft->description ?? ''), deadline: @js($draft->deadline ? \Carbon\Carbon::parse($draft->deadline)->format('Y-m-d') : ''), notes: @js($draft->notes ?? '') })"
                                                             class="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-indigo-600 hover:text-white transition">
                                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.75 20.25H3v-3.75L16.862 4.487Z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                                                             </svg>
                                                         </button>
                                                         <div class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
@@ -303,8 +320,9 @@
                                                 </button>
                                                 @if(auth()->user()->role != 'direksi')
                                                     <button type="button" onclick="deleteDraft({{ $draft->id }})"
-                                                        class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-semibold text-xs transition">
-                                                        🗑 Hapus
+                                                        class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-semibold text-xs transition">
+                                                        <x-icon name="trash" class="h-4 w-4" />
+                                                        <span>Hapus</span>
                                                     </button>
                                                 @endif
                                             </div>
@@ -450,7 +468,7 @@
                                                                                     onclick="event.stopPropagation(); openEditDataModal('checklist', { id: {{ $checklist->id }}, title: @js($checklist->title) })"
                                                                                     class="flex h-10 w-10 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition">
                                                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
-                                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.75 20.25H3v-3.75L16.862 4.487Z" />
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                                                                                     </svg>
                                                                                 </button>
                                                                             @endunless
@@ -1095,7 +1113,7 @@
                                                                                             viewBox="0 0 24 24" stroke-width="1.8"
                                                                                             stroke="currentColor" class="h-5 w-5">
                                                                                             <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.75 20.25H3v-3.75L16.862 4.487Z" />
+                                                                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                                                                                         </svg>
 
                                                                                     </button>
@@ -1110,7 +1128,7 @@
 
                                                                                 {{-- Reply --}}
                                                                                 <div class="relative group">
-
+<!-- 
                                                                                     <button type="button"
                                                                                         onclick="event.stopPropagation(); openChecklistReply({{ $c->id }}, '{{ addslashes($c->title) }}', {{ $task->id }}, '{{ addslashes($task->title) }}')"
                                                                                         class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white transition">
@@ -1122,18 +1140,18 @@
                                                                                                 d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H15.75M21 12c0 4.97-4.03 9-9 9a8.96 8.96 0 01-4.255-1.07L3 21l1.07-4.745A8.96 8.96 0 013 12c0-4.97 4.03-9 9-9s9 4.03 9 9z" />
                                                                                         </svg>
 
-                                                                                    </button>
+                                                                                    </button> -->
 
                                                                                     {{-- Tooltip --}}
-                                                                                    <div
+                                                                                    <!-- <div
                                                                                         class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
                                                                                         Reply Checklist
-                                                                                    </div>
+                                                                                    </div> -->
 
                                                                                 </div>
 
                                                                                 {{-- Chat --}}
-                                                                                <div class="relative group">
+                                                                                <!-- <div class="relative group">
 
                                                                                     <button type="button"
                                                                                         onclick="event.stopPropagation(); openAssignmentChat({{ $assignment->id }}, '{{ addslashes($assignment->description ?? '-') }}', {{ $user->id }})"
@@ -1154,7 +1172,7 @@
                                                                                         Open Chat
                                                                                     </div>
 
-                                                                                </div>
+                                                                                </div> -->
 
                                                                                 {{-- Uncheck --}}
                                                                                 @if($c->is_done)
@@ -1388,7 +1406,7 @@
                         <h2 id="assignModalTitle" class="text-2xl font-black text-slate-900">Assign User</h2>
                     </div>
                     <button type="button" onclick="hideAssignForm()"
-                        class="text-slate-500 hover:text-slate-900 text-2xl leading-none">✕</button>
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"><x-icon name="close" class="h-5 w-5" /></button>
                 </div>
 
                 <div class="p-6">
@@ -1463,7 +1481,7 @@
                         <h2 class="text-2xl font-black text-slate-900">Edit Project</h2>
                     </div>
                     <button type="button" onclick="hideProjectEditModal()"
-                        class="text-slate-500 hover:text-slate-900 text-2xl leading-none">✕</button>
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"><x-icon name="close" class="h-5 w-5" /></button>
                 </div>
 
                 <div class="p-6">
@@ -1531,7 +1549,7 @@
                         <h2 class="text-2xl font-black text-slate-900">Edit Task Draft</h2>
                     </div>
                     <button type="button" onclick="hideDraftEditModal()"
-                        class="text-slate-500 hover:text-slate-900 text-2xl leading-none">✕</button>
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"><x-icon name="close" class="h-5 w-5" /></button>
                 </div>
 
                 <div class="p-6">
@@ -1595,7 +1613,7 @@
                         <h2 class="text-2xl font-black text-slate-900">Edit Checklist</h2>
                     </div>
                     <button type="button" onclick="hideChecklistEditModal()"
-                        class="text-slate-500 hover:text-slate-900 text-2xl leading-none">✕</button>
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"><x-icon name="close" class="h-5 w-5" /></button>
                 </div>
 
                 <div class="p-6">
@@ -1644,7 +1662,7 @@
                     <button onclick="openCameraPanel()"
                         class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 transition">📷</button>
                     <button onclick="closeChatPanel()"
-                        class="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 transition">✕</button>
+                        class="inline-flex w-10 h-10 items-center justify-center rounded-2xl bg-white/10 hover:bg-white/20 transition"><x-icon name="close" class="w-5 h-5" /></button>
                 </div>
             </div>
 
@@ -1669,7 +1687,7 @@
                     <button onclick="capturePhotoPanel()"
                         class="absolute bottom-5 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-white border-4 border-indigo-600 shadow-xl"></button>
                     <button onclick="closeCameraPanel()"
-                        class="absolute top-4 right-4 w-10 h-10 rounded-2xl bg-black/50 text-white">✕</button>
+                        class="absolute top-4 right-4 inline-flex w-10 h-10 items-center justify-center rounded-2xl bg-black/50 text-white"><x-icon name="close" class="w-5 h-5" /></button>
                 </div>
             </div>
 
@@ -1701,7 +1719,7 @@
                         <h2 class="text-2xl font-black text-slate-900">Assign Checklist</h2>
                     </div>
                     <button type="button" onclick="hideAssignChecklistModal()"
-                        class="text-slate-500 hover:text-slate-900 text-2xl leading-none">✕</button>
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900"><x-icon name="close" class="h-5 w-5" /></button>
                 </div>
 
                 <div class="p-6 space-y-5">

@@ -11,7 +11,7 @@
         <div class="flex items-start gap-3">
             <a href="{{ $backUrl }}"
                class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                <span>←</span>
+                <x-icon name="back" class="w-4 h-4" />
                 <span>Back</span>
             </a>
             <div class="pt-0.5">
@@ -20,8 +20,9 @@
             </div>
         </div>
         <a href="{{ route('superadmin.divisi.create') }}"
-           class="inline-flex h-11 items-center rounded-2xl bg-blue-600 px-5 text-white shadow-sm transition hover:bg-blue-700">
-            + Tambah Divisi
+           class="inline-flex h-11 items-center gap-2 rounded-2xl bg-blue-600 px-5 text-white shadow-sm transition hover:bg-blue-700">
+            <x-icon name="plus" class="w-4 h-4" />
+            <span>Tambah Divisi</span>
         </a>
     </div>
 

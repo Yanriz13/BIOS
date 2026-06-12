@@ -170,11 +170,25 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200">
                             @foreach($assignments as $index => $assignment)
+                                @php
+                                    $doneChecklist = $assignment->checklists->where('is_done', true)->count();
+                                    $totalChecklist = $assignment->checklists->count();
+                                    $assignmentStatus = $totalChecklist > 0
+                                        ? ($doneChecklist >= $totalChecklist ? 'done' : ($doneChecklist > 0 ? 'progress' : 'pending'))
+                                        : 'pending';
+                                    $assignmentStatusLabel = $assignmentStatus === 'done' ? 'Done' : ($assignmentStatus === 'progress' ? 'On Progress' : 'Pending');
+                                    $assignmentStatusClass = $assignmentStatus === 'done'
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : ($assignmentStatus === 'progress' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
+                                @endphp
                                                     <tr class="hover:bg-slate-50 transition">
                                                         <td class="px-4 md:px-6 py-4">
                                                             <p class="text-xs md:text-sm font-semibold text-slate-900">{{ $assignment->task->title }}
                                                             </p>
                                                             <p class="text-xs text-slate-400 mt-1">#{{ $assignment->task_id }}</p>
+                                                            <span class="mt-2 inline-block rounded-full px-2.5 py-1 text-[11px] font-semibold {{ $assignmentStatusClass }}">
+                                                                {{ $assignmentStatusLabel }}
+                                                            </span>
                                                         </td>
                                                         <td class="px-4 md:px-6 py-4">
                                                             <p class="text-xs md:text-sm text-slate-600 line-clamp-2">
@@ -184,18 +198,18 @@
                                                         <td class="px-4 md:px-6 py-4 text-center">
                                                             <span
                                                                 class="inline-block rounded-full bg-indigo-100 px-3 py-1 text-xs md:text-sm font-semibold text-indigo-700">
-                                                                {{ $assignment->checklists->count() }}
+                                                                {{ $totalChecklist }}
                                                             </span>
                                                         </td>
                                                         <td class="px-4 md:px-6 py-4">
                                                             <div class="flex flex-col items-center gap-2">
                                                                 <div class="w-full bg-slate-200 rounded-full h-2 max-w-xs">
                                                                     <div class="bg-emerald-500 h-2 rounded-full"
-                                                                        style="width: {{ $assignment->checklists->count() > 0 ? ($assignment->checklists->where('is_done', true)->count() / $assignment->checklists->count() * 100) : 0 }}%">
+                                                                        style="width: {{ $totalChecklist > 0 ? ($doneChecklist / $totalChecklist * 100) : 0 }}%">
                                                                     </div>
                                                                 </div>
                                                                 <p class="text-xs text-slate-500">
-                                                                    {{ $assignment->checklists->where('is_done', true)->count() }}/{{ $assignment->checklists->count() }}
+                                                                    {{ $doneChecklist }}/{{ $totalChecklist }}
                                                                 </p>
                                                             </div>
                                                         </td>
@@ -513,11 +527,22 @@
 
                                     <div id="mobileCardList" class="divide-y divide-slate-200">
                                         @foreach($assignments as $index => $assignment)
+                                            @php
+                                                $doneChecklist = $assignment->checklists->where('is_done', true)->count();
+                                                $totalChecklist = $assignment->checklists->count();
+                                                $assignmentStatus = $totalChecklist > 0
+                                                    ? ($doneChecklist >= $totalChecklist ? 'done' : ($doneChecklist > 0 ? 'progress' : 'pending'))
+                                                    : 'pending';
+                                                $assignmentStatusLabel = $assignmentStatus === 'done' ? 'Done' : ($assignmentStatus === 'progress' ? 'On Progress' : 'Pending');
+                                                $assignmentStatusClass = $assignmentStatus === 'done'
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : ($assignmentStatus === 'progress' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
+                                            @endphp
                                             <div class="mobile-card p-4" data-task-title="{{ strtolower($assignment->task->title) }}"
                                                 data-task-id="{{ $assignment->task_id }}"
                                                 data-checklist-titles="{{ strtolower($assignment->checklists->pluck('title')->join(' ')) }}"
-                                                data-done-count="{{ $assignment->checklists->where('is_done', true)->count() }}"
-                                                data-total-count="{{ $assignment->checklists->count() }}">
+                                                data-done-count="{{ $doneChecklist }}"
+                                                data-total-count="{{ $totalChecklist }}">
 
                                                 <button onclick="toggleMobileDropdown('mobile-dropdown-{{ $index }}')" class="w-full text-left">
                                                     <div class="flex items-start justify-between gap-3 mb-3">
@@ -541,23 +566,22 @@
                                                         <div class="flex justify-between items-center">
                                                             <span class="text-xs font-semibold text-slate-600">Progress</span>
                                                             <span
-                                                                class="text-xs text-slate-500">{{ $assignment->checklists->where('is_done', true)->count() }}/{{ $assignment->checklists->count() }}</span>
+                                                                class="text-xs text-slate-500">{{ $doneChecklist }}/{{ $totalChecklist }}</span>
                                                         </div>
                                                         <div class="w-full bg-slate-200 rounded-full h-1.5">
                                                             <div class="bg-emerald-500 h-1.5 rounded-full transition-all"
-                                                                style="width: {{ $assignment->checklists->count() > 0 ? ($assignment->checklists->where('is_done', true)->count() / $assignment->checklists->count() * 100) : 0 }}%">
+                                                                style="width: {{ $totalChecklist > 0 ? ($doneChecklist / $totalChecklist * 100) : 0 }}%">
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     <div class="flex flex-wrap gap-2">
                                                         <span class="rounded-full bg-indigo-100 px-2 py-1 text-xs font-semibold text-indigo-700">
-                                                            {{ $assignment->checklists->count() }} Items
+                                                            {{ $totalChecklist }} Items
                                                         </span>
-                                                        @if($assignment->checklists->where('is_done', true)->count() === $assignment->checklists->count() && $assignment->checklists->count() > 0)
-                                                            <span class="rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">✓
-                                                                Selesai</span>
-                                                        @endif
+                                                        <span class="rounded-full px-2 py-1 text-xs font-semibold {{ $assignmentStatusClass }}">
+                                                            {{ $assignmentStatusLabel }}
+                                                        </span>
                                                         @if($assignment->deadline)
                                                             <span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
                                                                 {{ \Carbon\Carbon::parse($assignment->deadline)->format('d M Y') }}
@@ -569,105 +593,115 @@
                                                 <!-- Expandable Checklist Section -->
                                                 <div id="mobile-dropdown-{{ $index }}" class="hidden mt-4 pt-4 border-t border-slate-200">
                                                     <p class="text-xs font-semibold text-slate-700 mb-3">Checklist Items:</p>
-                                                    <div class="space-y-2">
+                                                    <div class="space-y-3">
                                                         @forelse($assignment->checklists as $checklist)
-                                                            <div class="flex flex-row items-center gap-2">
+                                                            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
 
-                                                                <label
-                                                                    class="flex flex-1 items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 transition cursor-pointer min-w-0"
-                                                                    onclick="handleChecklistClick(event, {{ $checklist->id }}, {{ $checklist->is_done ? 'true' : 'false' }}, {{ $checklist->file_path ? 'true' : 'false' }}, {{ $checklist->uncheck_reason ? json_encode($checklist->uncheck_reason) : 'null' }})">
+                                                                <div class="flex items-start gap-2">
+                                                                    <label
+                                                                        class="block min-w-0 flex-1 cursor-pointer"
+                                                                        onclick="handleChecklistClick(event, {{ $checklist->id }}, {{ $checklist->is_done ? 'true' : 'false' }}, {{ $checklist->file_path ? 'true' : 'false' }}, {{ $checklist->uncheck_reason ? json_encode($checklist->uncheck_reason) : 'null' }})">
 
-                                                                    <div class="h-4 w-4 rounded border-2 flex-shrink-0 flex items-center justify-center
-                                                                                        {{ $checklist->is_done ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white' }}"
-                                                                        id="checkbox-visual-{{ $checklist->id }}">
-                                                                        @if($checklist->is_done)
-                                                                            <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor"
-                                                                                viewBox="0 0 24 24">
-                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
-                                                                                    d="M5 13l4 4L19 7"></path>
-                                                                            </svg>
-                                                                        @endif
-                                                                    </div>
-
-                                                                    <div
-                                                                        class="flex h-6 w-6 items-center justify-center rounded-full flex-shrink-0 text-xs
-                                                                                        {{ $checklist->is_done ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-400' }}">
-                                                                        @if($checklist->is_done) ✓ @else ○ @endif
-                                                                    </div>
-
-                                                                    <div class="min-w-0 flex-1">
-                                                                        <p
-                                                                            class="text-xs font-semibold {{ $checklist->is_done ? 'text-slate-500 line-through' : 'text-slate-800' }} truncate">
-                                                                            {{ $checklist->title }}
-                                                                        </p>
-                                                                        <p
-                                                                            class="text-xs {{ $checklist->is_done ? 'text-emerald-600' : 'text-slate-500' }}">
-                                                                            {{ $checklist->is_done ? 'Selesai' : 'Menunggu' }}
-                                                                        </p>
-
-                                                                        @if(!$checklist->is_done && $checklist->uncheck_reason)
-                                                                            <div
-                                                                                class="mt-1 flex items-start gap-1 rounded-lg bg-red-50 border border-red-100 px-2 py-1.5">
-                                                                                <span class="text-red-400 text-xs shrink-0">⚠</span>
-                                                                                <p class="text-xs text-red-500 leading-relaxed">
-                                                                                    {{ $checklist->uncheck_reason }}
-                                                                                </p>
-                                                                            </div>
-                                                                        @endif
-
-                                                                        @if($checklist->file_path)
-                                                                            <div class="mt-1.5 flex items-center gap-1.5">
-                                                                                @if(str_starts_with($checklist->file_type ?? '', 'image/'))
-                                                                                    <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
-                                                                                        onclick="event.stopPropagation()"
-                                                                                        class="block rounded overflow-hidden border border-slate-200 w-10 h-10 flex-shrink-0">
-                                                                                        <img src="{{ Storage::url($checklist->file_path) }}" alt="Bukti"
-                                                                                            class="w-full h-full object-cover">
-                                                                                    </a>
-                                                                                @else
-                                                                                    <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
-                                                                                        onclick="event.stopPropagation()"
-                                                                                        class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 max-w-[90px] truncate">
-                                                                                        📎 {{ Str::limit($checklist->file_name ?? 'File', 10) }}
-                                                                                    </a>
-                                                                                @endif
-                                                                                <button type="button"
-                                                                                    onclick="event.stopPropagation(); deleteChecklistFile({{ $checklist->id }})"
-                                                                                    class="rounded-full bg-red-100 p-1 text-red-500 hover:bg-red-200 transition flex-shrink-0">
-                                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                                        <div class="flex items-start gap-2.5 min-w-0">
+                                                                            <div class="h-4 w-4 mt-0.5 rounded border-2 flex-shrink-0 flex items-center justify-center
+                                                                                                {{ $checklist->is_done ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 bg-white' }}"
+                                                                                id="checkbox-visual-{{ $checklist->id }}">
+                                                                                @if($checklist->is_done)
+                                                                                    <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor"
                                                                                         viewBox="0 0 24 24">
-                                                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                                                                            d="M5 13l4 4L19 7"></path>
                                                                                     </svg>
-                                                                                </button>
+                                                                                @endif
                                                                             </div>
-                                                                        @else
-                                                                            <p class="text-xs text-amber-600 mt-0.5">⚠ Belum ada bukti</p>
-                                                                        @endif
-                                                                    </div>
 
-                                                                    <span
-                                                                        class="rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0
-                                                                                        {{ $checklist->is_done ? 'bg-slate-100 text-slate-600' : 'bg-indigo-100 text-indigo-700' }}">
-                                                                        {{ $checklist->is_done ? 'Batal' : 'Selesai' }}
-                                                                    </span>
-                                                                </label>
+                                                                            <div
+                                                                                class="flex h-6 w-6 mt-0.5 items-center justify-center rounded-full flex-shrink-0 text-xs
+                                                                                                {{ $checklist->is_done ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-400' }}">
+                                                                                @if($checklist->is_done) ✓ @else ○ @endif
+                                                                            </div>
+
+                                                                            <div class="min-w-0 flex-1">
+                                                                                <p
+                                                                                    class="text-xs font-semibold leading-relaxed break-words {{ $checklist->is_done ? 'text-slate-500 line-through' : 'text-slate-800' }}">
+                                                                                    {{ $checklist->title }}
+                                                                                </p>
+                                                                                <p
+                                                                                    class="mt-0.5 text-[11px] {{ $checklist->is_done ? 'text-emerald-600' : 'text-slate-500' }}">
+                                                                                    {{ $checklist->is_done ? 'Selesai' : 'Menunggu' }}
+                                                                                </p>
+
+                                                                                <span
+                                                                                    class="mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold
+                                                                                                    {{ $checklist->is_done ? 'bg-slate-200 text-slate-600' : 'bg-indigo-100 text-indigo-700' }}">
+                                                                                    {{ $checklist->is_done ? 'Batalkan' : 'Selesaikan' }}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </label>
+
+                                                                    <button type="button"
+                                                                        onclick="event.stopPropagation(); openStaffChat('task', {{ $assignment->task_id }}, '{{ addslashes($assignment->task->title) }}')"
+                                                                        class="inline-flex items-center justify-center rounded-xl bg-slate-900 w-9 h-9 text-white hover:bg-slate-800 transition flex-shrink-0 mt-0.5"
+                                                                        title="Lihat Chat Task">
+                                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                                                                            </path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+
+                                                                @if(!$checklist->is_done && $checklist->uncheck_reason)
+                                                                    <div class="mt-2 flex items-start gap-1.5 rounded-xl bg-red-50 border border-red-100 px-2.5 py-2">
+                                                                        <span class="text-red-400 text-xs shrink-0 mt-0.5">⚠</span>
+                                                                        <p class="text-[11px] text-red-500 leading-relaxed break-words">
+                                                                            {{ $checklist->uncheck_reason }}
+                                                                        </p>
+                                                                    </div>
+                                                                @endif
+
+                                                                <div class="mt-2.5">
+                                                                    @if($checklist->file_path)
+                                                                        <div class="flex flex-wrap items-center gap-2">
+                                                                            @if(str_starts_with($checklist->file_type ?? '', 'image/'))
+                                                                                <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
+                                                                                    onclick="event.stopPropagation()"
+                                                                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2 max-w-full">
+                                                                                    <img src="{{ Storage::url($checklist->file_path) }}" alt="Bukti"
+                                                                                        class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
+                                                                                    <span class="text-[11px] font-medium text-slate-600 break-all leading-snug">
+                                                                                        {{ Str::limit($checklist->file_name ?? 'image', 20) }}
+                                                                                    </span>
+                                                                                </a>
+                                                                            @else
+                                                                                <a href="{{ Storage::url($checklist->file_path) }}" target="_blank"
+                                                                                    onclick="event.stopPropagation()"
+                                                                                    class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-slate-200 px-2.5 py-2 text-[11px] font-medium text-slate-700 max-w-full break-all leading-snug">
+                                                                                    📎 {{ Str::limit($checklist->file_name ?? 'File', 28) }}
+                                                                                </a>
+                                                                            @endif
+
+                                                                            <button type="button"
+                                                                                onclick="event.stopPropagation(); deleteChecklistFile({{ $checklist->id }})"
+                                                                                class="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-100 transition">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                                                    viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                        stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                                </svg>
+                                                                                Hapus File
+                                                                            </button>
+                                                                        </div>
+                                                                    @else
+                                                                        <p class="text-[11px] text-amber-600">⚠ Belum ada bukti</p>
+                                                                    @endif
+                                                                </div>
 
                                                                 <form id="uncheck-form-{{ $checklist->id }}" method="POST"
                                                                     action="{{ route('project.checklist.toggle', $checklist->id) }}" class="hidden">
                                                                     @csrf
                                                                 </form>
-
-                                                                <button type="button"
-                                                                    onclick="event.stopPropagation(); openStaffChat('task', {{ $assignment->task_id }}, '{{ addslashes($assignment->task->title) }}')"
-                                                                    class="inline-flex items-center justify-center rounded-xl bg-slate-900 w-9 h-9 text-white hover:bg-slate-800 transition flex-shrink-0"
-                                                                    title="Lihat Chat Task">
-                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
-                                                                        </path>
-                                                                    </svg>
-                                                                </button>
 
                                                             </div>
                                                         @empty

@@ -38,6 +38,31 @@ class HomeController extends Controller
             $scopeTitle = $user->name;
         }
 
+        $resolveAssignmentStatus = function ($assignment) {
+            if ($assignment->status === 'reject') {
+                return 'reject';
+            }
+
+            $totalChecklist = $assignment->checklists->count();
+            $doneChecklist  = $assignment->checklists->where('is_done', 1)->count();
+
+            if ($totalChecklist > 0) {
+                if ($doneChecklist >= $totalChecklist) {
+                    return 'done';
+                }
+
+                if ($doneChecklist > 0) {
+                    return 'progress';
+                }
+
+                return 'pending';
+            }
+
+            return in_array($assignment->status, ['pending', 'progress', 'done'], true)
+                ? $assignment->status
+                : 'pending';
+        };
+
         /*
         |--------------------------------------------------------------------------
         | SUMMARY COUNTS
@@ -66,17 +91,19 @@ class HomeController extends Controller
             ->with(['assignments.user', 'assignments.checklists'])
             ->whereHas('assignments')
             ->get()
-            ->map(function ($task) {
+            ->map(function ($task) use ($resolveAssignmentStatus) {
                 $deadline = $task->assignments->whereNotNull('deadline')->min('deadline');
                 $total    = $task->assignments->count();
-                $done     = $task->assignments->where('status', 'done')->count();
+                $done     = $task->assignments->filter(function ($assignment) use ($resolveAssignmentStatus) {
+                    return $resolveAssignmentStatus($assignment) === 'done';
+                })->count();
 
-                $assignmentDetail = $task->assignments->map(function ($a) {
+                $assignmentDetail = $task->assignments->map(function ($a) use ($resolveAssignmentStatus) {
                     $totalCl = $a->checklists->count();
                     $doneCl  = $a->checklists->where('is_done', 1)->count();
                     return [
                         'user_name'  => optional($a->user)->name ?? '-',
-                        'status'     => $a->status,
+                        'status'     => $resolveAssignmentStatus($a),
                         'deadline'   => $a->deadline,
                         'total_cl'   => $totalCl,
                         'done_cl'    => $doneCl,
@@ -115,22 +142,27 @@ class HomeController extends Controller
                 ->where('user_id', $employee->id)
                 ->get();
 
+            $statusCounts = $assignments
+                ->map(fn($assignment) => $resolveAssignmentStatus($assignment))
+                ->countBy()
+                ->toArray();
+
             $totalTasks      = $assignments->count();
-            $doneTasks       = $assignments->where('status', 'done')->count();
-            $progressTasks   = $assignments->where('status', 'progress')->count();
-            $pendingTasks    = $assignments->where('status', 'pending')->count();
+            $doneTasks       = (int) ($statusCounts['done'] ?? 0);
+            $progressTasks   = (int) ($statusCounts['progress'] ?? 0);
+            $pendingTasks    = (int) ($statusCounts['pending'] ?? 0);
             $projectCountEmp = $assignments->pluck('task_id')->unique()->count();
 
             $checklists     = TaskChecklist::whereHas('assignment', fn($q) => $q->where('user_id', $employee->id))->get();
             $totalChecklist = $checklists->count();
             $doneChecklist  = $checklists->where('is_done', 1)->count();
 
-            $taskDetail = $assignments->map(function ($a) {
+            $taskDetail = $assignments->map(function ($a) use ($resolveAssignmentStatus) {
                 return [
                     'assignment_id' => $a->id,
                     'task_title'    => $a->task->title ?? '-',
                     'task_divisi'   => $a->task->divisi ?? '-',
-                    'status'        => $a->status,
+                    'status'        => $resolveAssignmentStatus($a),
                     'deadline'      => $a->deadline,
                     'total_cl'      => $a->checklists->count(),
                     'done_cl'       => $a->checklists->where('is_done', 1)->count(),
@@ -142,15 +174,34 @@ class HomeController extends Controller
             })->values();
 
             $sla = $totalChecklist > 0 ? round(($doneChecklist / $totalChecklist) * 100) : 0;
-$doneAssignments = $assignments->where('status', 'done')->filter(function ($a) {
-    return $a->created_at && $a->updated_at;
-});
 
-$avgDuration = $doneAssignments->count() > 0
-    ? round($doneAssignments->avg(function ($a) {
-        return $a->created_at->diffInHours($a->updated_at);
-    }))
-    : null;
+            $doneAssignments = $assignments->filter(function ($assignment) use ($resolveAssignmentStatus) {
+                return $resolveAssignmentStatus($assignment) === 'done';
+            });
+
+            $durationHours = $doneAssignments->map(function ($assignment) {
+                if (!$assignment->created_at) {
+                    return null;
+                }
+
+                // Prefer the latest checked checklist time when available.
+                $lastChecklistDoneAt = $assignment->checklists
+                    ->where('is_done', 1)
+                    ->max('updated_at');
+
+                $endAt = $lastChecklistDoneAt ?: $assignment->updated_at;
+
+                if (!$endAt) {
+                    return null;
+                }
+
+                return $assignment->created_at->diffInHours($endAt);
+            })->filter(fn($hours) => $hours !== null);
+
+            $avgDuration = $durationHours->isNotEmpty()
+                ? round($durationHours->avg())
+                : null;
+
             $employeeStats[] = [
                 'employee'        => $employee,
                 'project_count'   => $projectCountEmp,
