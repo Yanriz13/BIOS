@@ -98,7 +98,7 @@
                         <div id="doneColumn" data-status="done" class="space-y-4 min-h-[500px]" ondrop="drop(event)"
                             ondragover="allowDrop(event)">
                             @foreach($doneTasks as $task)
-                                @include('partials.task-card', ['task' => $task])
+                                @include('project.component.task-card', ['task' => $task])
                             @endforeach
                         </div>
 
@@ -109,6 +109,10 @@
         </div>
 
     </div>
+
+    @include('project.component.edit-data-modal', [
+        'projectEditUsers' => $users,
+    ])
 
     {{-- ========================================= --}}
     {{-- ADD TASK MODAL --}}
@@ -342,6 +346,135 @@
     </div>
 
     {{-- ========================================= --}}
+    {{-- EDIT TASK MODAL --}}
+    {{-- ========================================= --}}
+    <div id="editTaskModal"
+        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4 overflow-y-auto">
+
+        <div class="bg-white w-full max-w-3xl rounded-[32px] shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+            <div class="p-6 border-b shrink-0">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-700">Edit Project</h2>
+                        <p class="text-sm text-slate-500 mt-1">Update title, status, priority, and project members.</p>
+                    </div>
+                    <button type="button" onclick="closeEditTaskModal()"
+                        class="w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 transition shrink-0">✕</button>
+                </div>
+            </div>
+
+            <form id="editTaskForm" class="flex-1 overflow-y-auto p-6 space-y-5">
+                @csrf
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" id="editTaskId" name="task_id" value="">
+
+                <div class="grid gap-5 md:grid-cols-2">
+                    <div class="md:col-span-2">
+                        <label class="font-semibold text-slate-700">Task Title</label>
+                        <input type="text" id="editTaskTitle" name="title" required
+                            class="w-full mt-2 h-14 rounded-2xl border border-slate-200 px-5 outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="font-semibold text-slate-700">Description</label>
+                        <textarea id="editTaskDescription" name="description" rows="4"
+                            class="w-full mt-2 rounded-2xl border border-slate-200 p-5 outline-none focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="font-semibold text-slate-700">Priority</label>
+                        <select id="editTaskPriority" name="priority"
+                            class="w-full mt-2 h-14 rounded-2xl border border-slate-200 px-5 outline-none focus:ring-4 focus:ring-indigo-100">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="font-semibold text-slate-700">Status</label>
+                        <select id="editTaskStatus" name="status"
+                            class="w-full mt-2 h-14 rounded-2xl border border-slate-200 px-5 outline-none focus:ring-4 focus:ring-indigo-100">
+                            <option value="pending">Pending</option>
+                            <option value="progress">Progress</option>
+                            <option value="done">Done</option>
+                            <option value="reject">Reject</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-4">Project Members</label>
+                    <div class="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                        <div class="overflow-y-auto max-h-[300px]">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-slate-100 text-slate-700 sticky top-0 z-10">
+                                    <tr>
+                                        <th class="w-16 px-5 py-4 text-center font-bold">Pilih</th>
+                                        <th class="px-5 py-4 text-left font-bold">User</th>
+                                        <th class="w-40 px-5 py-4 text-left font-bold">Role</th>
+                                        <th class="w-40 px-5 py-4 text-center font-bold">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 bg-white">
+                                    @foreach($users as $user)
+                                        <tr class="hover:bg-slate-50 transition">
+                                            <td class="px-5 py-4 text-center">
+                                                <label class="inline-flex cursor-pointer">
+                                                    <input type="checkbox" name="user_ids[]" value="{{ $user->id }}"
+                                                        class="edit-task-user-checkbox peer hidden">
+                                                    <div class="flex h-6 w-6 items-center justify-center rounded-lg border-2 border-slate-300 bg-white transition-all peer-checked:border-indigo-500 peer-checked:bg-indigo-500">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                            stroke-width="3" stroke="currentColor"
+                                                            class="hidden h-3.5 w-3.5 text-white peer-checked:block">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </div>
+                                                </label>
+                                            </td>
+                                            <td class="px-5 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <img src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                                                        alt="{{ $user->name }}"
+                                                        class="h-11 w-11 rounded-2xl object-cover border border-slate-200">
+                                                    <div class="min-w-0">
+                                                        <p class="font-semibold text-slate-800 truncate">{{ $user->name }}</p>
+                                                        <p class="text-xs text-slate-400 mt-0.5">ID User #{{ $user->id }}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-5 py-4">
+                                                <span class="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                                                    {{ ucfirst($user->role) }}
+                                                </span>
+                                            </td>
+                                            <td class="px-5 py-4 text-center">
+                                                <span class="inline-flex items-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                                                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                                    Available
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <p class="mt-3 text-xs text-slate-400">Pilih satu atau lebih user untuk di-assign ke project ini.</p>
+                </div>
+
+                <div class="pt-2 sticky bottom-0 bg-white">
+                    <button type="submit"
+                        class="w-full h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition shadow-lg shadow-indigo-100">
+                        Update Project
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- ========================================= --}}
     {{-- GLOBAL LOADING --}}
     {{-- ========================================= --}}
     <div id="globalLoading" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[9999] hidden items-center justify-center">
@@ -357,6 +490,9 @@
     {{-- ========================================= --}}
     <script>
         const isDireksi = @json(auth()->user()->role === 'direksi');
+        const canEditProject = @json(auth()->user()->role !== 'direksi');
+        let editingTaskId = null;
+        let editingTaskUserIds = [];
 
         // =====================
         // LOADING
@@ -389,6 +525,62 @@
             el.classList.remove('flex');
         }
 
+        function openEditTaskModal(taskId, title, description, priority, status, userIds) {
+            if (!canEditProject) return;
+            editingTaskId = taskId;
+            const normalizedUserIds = Array.isArray(userIds)
+                ? userIds
+                : (userIds && typeof userIds === 'object' ? Object.values(userIds) : []);
+            editingTaskUserIds = normalizedUserIds.map(id => String(id));
+            document.getElementById('editTaskId').value = taskId;
+            document.getElementById('editTaskTitle').value = title || '';
+            document.getElementById('editTaskDescription').value = description || '';
+            document.getElementById('editTaskPriority').value = priority || 'medium';
+            document.getElementById('editTaskStatus').value = status || 'pending';
+            document.querySelectorAll('.edit-task-user-checkbox').forEach(cb => {
+                cb.checked = editingTaskUserIds.includes(String(cb.value));
+            });
+            const el = document.getElementById('editTaskModal');
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+        }
+
+        function closeEditTaskModal() {
+            const el = document.getElementById('editTaskModal');
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+            editingTaskId = null;
+            editingTaskUserIds = [];
+        }
+
+        document.getElementById('editTaskForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!editingTaskId) return;
+
+            const form = e.currentTarget;
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(`/project/${editingTaskId}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    closeEditTaskModal();
+                    gToast.success('Project diperbarui', data.message || 'Project berhasil diupdate.');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    gModal.alert(data.message || 'Gagal mengupdate project.', 'warning');
+                }
+            } catch (error) {
+                console.error(error);
+                gModal.alert('Terjadi kesalahan saat mengupdate project.', 'warning');
+            }
+        });
+
         // =====================
         // DRAG & DROP
         // =====================
@@ -399,6 +591,7 @@
 
         function drag(ev) {
             if (isDireksi) return false;
+            if (ev.target.closest('button, a, input, textarea, select, label')) return false;
             const taskCard = ev.target.closest('.task-card');
             if (taskCard) ev.dataTransfer.setData("text", taskCard.id);
         }
@@ -435,6 +628,9 @@
                 .then(response => console.log(response))
                 .catch(error => console.error(error));
         }
+
+            window.openEditTaskModal = openEditTaskModal;
+            window.closeEditTaskModal = closeEditTaskModal;
 
         // =====================
         // CLOSE MODAL ON BACKDROP CLICK

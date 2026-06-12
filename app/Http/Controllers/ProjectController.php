@@ -74,6 +74,42 @@ class ProjectController extends Controller
             ->with('success', 'Task berhasil ditambahkan');
     }
 
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'priority' => 'required|in:low,medium,high',
+            'status' => 'required|in:pending,progress,done,reject',
+            'user_ids' => 'nullable|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        $task = Task::findOrFail($id);
+        $divisi = $task->divisi ?: auth()->user()->divisi;
+
+        $task->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'priority' => $request->priority,
+            'status' => $request->status,
+        ]);
+
+        if ($request->has('user_ids')) {
+            $validUsers = User::whereIn('id', $request->user_ids ?? [])
+                ->where('role', 'staff')
+                ->where('divisi', $divisi)
+                ->pluck('id');
+
+            $task->users()->sync($validUsers);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Project berhasil diupdate',
+        ]);
+    }
+
     public function addUsers(Request $request, $id)
     {
         $request->validate([
@@ -255,6 +291,44 @@ class ProjectController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Assignment berhasil disimpan'
+        ]);
+    }
+
+    public function updateAssignment(Request $request, $id)
+    {
+        $request->validate([
+            'user_id' => 'nullable|exists:users,id',
+            'description' => 'nullable|string',
+            'deadline' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $assignment = TaskAssignment::with('task')->findOrFail($id);
+
+        if ($request->filled('user_id')) {
+            $user = User::where('id', $request->user_id)
+                ->where('role', 'staff')
+                ->where('divisi', $assignment->task->divisi ?? auth()->user()->divisi)
+                ->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Assignment hanya boleh untuk staff pada divisi yang sama.',
+                ], 403);
+            }
+        }
+
+        $assignment->update([
+            'user_id' => $request->filled('user_id') ? $request->user_id : null,
+            'description' => $request->description,
+            'deadline' => $request->deadline,
+            'notes' => $request->notes,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task berhasil diupdate',
         ]);
     }
 
@@ -487,6 +561,23 @@ class ProjectController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Checklist berhasil diassign ke user']);
+    }
+
+    public function updateChecklist(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        $checklist = TaskChecklist::findOrFail($id);
+        $checklist->update([
+            'title' => $request->title,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Checklist berhasil diupdate',
+        ]);
     }
 public function uploadChecklistFile(Request $request, $id)
 {

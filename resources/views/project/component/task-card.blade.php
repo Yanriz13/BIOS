@@ -82,15 +82,27 @@
                     {{ ucfirst($task->priority) }} Priority
                 </span>
             </div>
-            <a
-                href="{{ route('project.detail', $task->id) }}"
-                class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
-            >
-                View
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
+            <div class="flex items-center gap-2">
+                @unless(auth()->user()->role == 'direksi')
+                    <button
+                        type="button"
+                        draggable="false"
+                        onclick="event.stopPropagation(); openEditDataModal('project', { id: {{ $task->id }}, title: @js($task->title), description: @js($task->description ?? ''), priority: @js($task->priority), status: @js($task->status), userIds: @json($task->users->pluck('id')->values()->all()) })"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-100 hover:text-slate-900"
+                    >
+                        Edit
+                    </button>
+                @endunless
+                <a
+                    href="{{ route('project.detail', $task->id) }}"
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                    View
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
         </div>
 
     </div>

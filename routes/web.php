@@ -113,6 +113,9 @@ Route::middleware(['auth', 'role:manager'])
         Route::post('/project/store', [ProjectController::class, 'store'])
             ->name('project.store');
 
+        Route::put('/project/{id}', [ProjectController::class, 'update'])
+            ->name('project.update');
+
         Route::post('/project/{id}/users', [ProjectController::class, 'addUsers'])
             ->name('project.users.add');
 
@@ -134,8 +137,14 @@ Route::middleware(['auth', 'role:manager'])
         Route::post('/project/{id}/todos', [ProjectController::class, 'storeTodos'])
             ->name('project.todos.store');
 
+        Route::put('/project/assignment/{id}', [ProjectController::class, 'updateAssignment'])
+            ->name('project.assignment.update');
+
         Route::delete('/project/assignment/{id}', [ProjectController::class, 'destroyAssignment'])
             ->name('project.assignment.destroy');
+
+        Route::put('/project/checklist/{id}', [ProjectController::class, 'updateChecklist'])
+            ->name('project.checklist.update');
 
         Route::delete('/project/checklist/{id}', [ProjectController::class, 'destroyChecklist'])
             ->name('project.checklist.destroy');
@@ -220,6 +229,9 @@ Route::prefix('project/daily-routine')
 
         Route::post('/', [DailyRoutineController::class, 'store'])
             ->name('store');
+
+        Route::put('{id}', [DailyRoutineController::class, 'update'])
+            ->name('update');
 
         Route::patch('{id}/status', [DailyRoutineController::class, 'updateStatus'])
             ->name('update-status');

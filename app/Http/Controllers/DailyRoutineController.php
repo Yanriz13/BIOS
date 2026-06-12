@@ -224,6 +224,51 @@ public function store(Request $request): JsonResponse
     }
 }
 
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'deadline' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'user_id' => 'nullable|exists:users,id',
+        ]);
+
+        $routine = DailyRoutine::findOrFail($id);
+
+        if (!empty($validated['user_id'])) {
+            $query = User::where('id', $validated['user_id'])
+                ->where('role', 'staff');
+
+            if (auth()->user()->role === 'supervisor') {
+                $query->where('supervisor_id', auth()->id());
+            } else {
+                $query->where('divisi', auth()->user()->divisi);
+            }
+
+            if (!$query->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hanya bisa assign ke member yang sesuai akses Anda.',
+                ], 403);
+            }
+        }
+
+        $routine->update([
+            'user_id' => $validated['user_id'] ?? null,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'deadline' => $validated['deadline'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daily routine berhasil diperbarui.',
+            'data' => $routine->load(['checklists', 'user']),
+        ]);
+    }
+
     // ─── Update status ─────────────────────────────────────
 
     public function updateStatus(Request $request, int $id): JsonResponse

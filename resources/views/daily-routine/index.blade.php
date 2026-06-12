@@ -285,6 +285,19 @@ $overdue = strtolower($routine->deadline) === $today
                                 <td class="px-4 py-3" onclick="event.stopPropagation()">
                                     <div class="flex items-center justify-center gap-1.5">
                                         @if($isManager)
+                                            {{-- Edit button --}}
+                                            <div class="tooltip-group">
+                                                <button onclick="openDailyRoutineEditModal({{ $routine->id }}, @js($routine->title), @js($routine->description ?? ''), @js($routine->user_id ?? ''), @js($routine->deadline ?? ''), @js($routine->notes ?? ''))"
+                                                    class="w-8 h-8 rounded-xl border border-violet-100 bg-violet-50 hover:bg-violet-600 text-violet-600 hover:text-white transition flex items-center justify-center"
+                                                    title="Edit Routine">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.75 20.25H3v-3.75L16.862 4.487Z" />
+                                                    </svg>
+                                                </button>
+                                                <span class="tooltip-text">Edit Routine</span>
+                                            </div>
+
                                             {{-- Reassign button --}}
                                             <button onclick="openReassignModal({{ $routine->id }}, {{ $routine->user_id ?? 'null' }})"
                                                 class="w-8 h-8 rounded-xl border border-slate-200 hover:bg-violet-50 hover:border-violet-200 text-slate-400 hover:text-violet-600 transition flex items-center justify-center"
@@ -729,12 +742,13 @@ $overdue = strtolower($routine->deadline) === $today
                 <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-5 shrink-0">
                     <div>
                         <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Baru</p>
-                        <h2 class="text-2xl font-black text-slate-900">Create Daily Routine</h2>
+                        <h2 id="drModalTitle" class="text-2xl font-black text-slate-900">Create Daily Routine</h2>
                     </div>
                     <button onclick="hideDailyRoutineForm()"
                         class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center text-slate-600 text-xl">✕</button>
                 </div>
                 <div class="overflow-y-auto flex-1 p-6 space-y-5">
+                    <input type="hidden" id="drRoutineId" value="">
                     <div>
                         <label class="text-sm font-semibold text-slate-700">Judul Routine <span
                                 class="text-red-500">*</span></label>
@@ -818,17 +832,19 @@ $overdue = strtolower($routine->deadline) === $today
                     </div>
                     <div>
                         <label class="text-sm font-semibold text-slate-700">Checklist Items</label>
-                        <div id="drChecklistContainer" class="mt-3 space-y-3"></div>
-                        <button onclick="addDrChecklist()"
-                            class="mt-3 inline-flex items-center gap-2 rounded-2xl bg-violet-600 hover:bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition">
-                            + Tambah Item
-                        </button>
+                        <div id="drChecklistSection">
+                            <div id="drChecklistContainer" class="mt-3 space-y-3"></div>
+                            <button onclick="addDrChecklist()"
+                                class="mt-3 inline-flex items-center gap-2 rounded-2xl bg-violet-600 hover:bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition">
+                                + Tambah Item
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="shrink-0 border-t border-slate-200 px-6 py-4 bg-slate-50 flex gap-3 justify-end">
                     <button onclick="hideDailyRoutineForm()"
                         class="rounded-3xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">Batal</button>
-                    <button onclick="submitDailyRoutine()"
+                    <button id="drSubmitButton" onclick="submitDailyRoutine()"
                         class="rounded-3xl bg-violet-600 hover:bg-violet-700 px-6 py-3 text-sm font-semibold text-white transition shadow-lg shadow-violet-100">Simpan
                         Routine</button>
                 </div>
@@ -910,16 +926,92 @@ $overdue = strtolower($routine->deadline) === $today
         const CSRF = document.querySelector('meta[name="csrf-token"]').content;
         let currentActiveFilter = 'all';
         const openRows = new Set();
- function setDeadlineDay() {
+        let drMode = 'create';
 
-    const checkedDays = [];
+        function syncDeadlineInput() {
+            const checkedDays = [];
 
-    document.querySelectorAll('.day-check:checked').forEach(el => {
-        checkedDays.push(el.value);
-    });
+            document.querySelectorAll('.day-check:checked').forEach(el => {
+                checkedDays.push(el.value);
+            });
 
-    document.getElementById('drDeadline').value = checkedDays.join(',');
-}
+            const deadline = document.getElementById('drDeadline');
+            if (deadline) {
+                deadline.value = checkedDays.join(',');
+            }
+        }
+
+        function setDeadlineDay() {
+            syncDeadlineInput();
+        }
+
+        function setDeadlineDays(deadlineValue) {
+            const values = (deadlineValue || '')
+                .split(',')
+                .map(v => v.trim())
+                .filter(Boolean);
+
+            document.querySelectorAll('.day-check').forEach(el => {
+                el.checked = values.includes(el.value);
+            });
+
+            syncDeadlineInput();
+        }
+
+        function resetDailyRoutineForm() {
+            ['drTitle', 'drDescription', 'drDeadline', 'drNotes'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            const user = document.getElementById('drUserId');
+            if (user) user.value = '';
+
+            const routineId = document.getElementById('drRoutineId');
+            if (routineId) routineId.value = '';
+
+            document.querySelectorAll('.day-check').forEach(el => { el.checked = false; });
+            const checklist = document.getElementById('drChecklistContainer');
+            if (checklist) checklist.innerHTML = '';
+
+            syncDeadlineInput();
+        }
+
+        function applyDailyRoutineMode(mode) {
+            drMode = mode;
+
+            const title = document.getElementById('drModalTitle');
+            const submit = document.getElementById('drSubmitButton');
+            const checklistSection = document.getElementById('drChecklistSection');
+
+            if (mode === 'edit') {
+                if (title) title.textContent = 'Edit Daily Routine';
+                if (submit) submit.textContent = 'Simpan Perubahan';
+                if (checklistSection) checklistSection.classList.add('hidden');
+            } else {
+                if (title) title.textContent = 'Create Daily Routine';
+                if (submit) submit.textContent = 'Simpan Routine';
+                if (checklistSection) checklistSection.classList.remove('hidden');
+            }
+        }
+
+        function openDailyRoutineEditModal(id, title, description, userId, deadline, notes) {
+            applyDailyRoutineMode('edit');
+            resetDailyRoutineForm();
+
+            document.getElementById('drRoutineId').value = id;
+            document.getElementById('drTitle').value = title || '';
+            document.getElementById('drDescription').value = description || '';
+            document.getElementById('drUserId').value = userId || '';
+            document.getElementById('drNotes').value = notes || '';
+            setDeadlineDays(deadline || '');
+
+            const m = document.getElementById('dailyRoutineModalWrapper');
+            if (!m) return;
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+        }
         // ─── Filter & Search ──────────────────────────────────
         function filterStatus(status) {
             currentActiveFilter = status;
@@ -1058,12 +1150,11 @@ $overdue = strtolower($routine->deadline) === $today
 
         // ─── Create Routine modal ─────────────────────────────
         function showDailyRoutineForm() {
+            applyDailyRoutineMode('create');
+            resetDailyRoutineForm();
             const m = document.getElementById('dailyRoutineModalWrapper');
             if (!m) return;
             m.classList.remove('hidden'); m.classList.add('flex');
-            ['drTitle', 'drDescription', 'drDeadline', 'drNotes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-            document.getElementById('drUserId').value = '';
-            document.getElementById('drChecklistContainer').innerHTML = '';
             document.body.style.overflow = 'hidden';
         }
         function hideDailyRoutineForm() {
@@ -1084,24 +1175,35 @@ $overdue = strtolower($routine->deadline) === $today
         async function submitDailyRoutine() {
             const title = document.getElementById('drTitle').value.trim();
             if (!title) { gModal.alert('Judul routine wajib diisi.', 'warning'); return; }
-            const checklists = Array.from(document.getElementById('drChecklistContainer').querySelectorAll('input[type="text"]'))
-                .map(i => i.value.trim()).filter(Boolean);
             const payload = {
                 title,
                 description: document.getElementById('drDescription').value.trim(),
                 user_id: document.getElementById('drUserId').value || null,
                 deadline: document.getElementById('drDeadline').value || null,
                 notes: document.getElementById('drNotes').value.trim(),
-                checklists,
             };
             try {
-                const res = await fetch('/project/daily-routine', {
-                    method: 'POST',
+                const routineId = document.getElementById('drRoutineId').value;
+                const url = routineId ? `/project/daily-routine/${routineId}` : '/project/daily-routine';
+                const method = routineId ? 'PUT' : 'POST';
+
+                if (!routineId) {
+                    const checklists = Array.from(document.getElementById('drChecklistContainer').querySelectorAll('input[type="text"]'))
+                        .map(i => i.value.trim()).filter(Boolean);
+                    payload.checklists = checklists;
+                }
+
+                const res = await fetch(url, {
+                    method,
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
                     body: JSON.stringify(payload),
                 });
                 const data = await res.json();
-                if (data.success) { hideDailyRoutineForm(); gToast.success('Berhasil!', 'Daily routine dibuat.'); setTimeout(() => location.reload(), 1000); }
+                if (data.success) {
+                    hideDailyRoutineForm();
+                    gToast.success('Berhasil!', routineId ? 'Daily routine diperbarui.' : 'Daily routine dibuat.');
+                    setTimeout(() => location.reload(), 1000);
+                }
                 else { gModal.alert(data.message || 'Gagal menyimpan.', 'warning'); }
             } catch (e) { gModal.alert('Terjadi kesalahan.', 'warning'); }
         }

@@ -57,10 +57,11 @@
                             {{ ucfirst($task->status) }}
                         </span>
 
-                        <buttontype="button" onclick="openGroupChat({{ $task->id }}, '{{ addslashes($task->title) }}')"
+
+                        <button type="button" onclick="openGroupChat({{ $task->id }}, '{{ addslashes($task->title) }}')"
                             class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-semibold transition shadow-lg shadow-indigo-100">
                             Chat Semua
-                            </button>
+                        </button>
 
                     </div>
 
@@ -282,6 +283,20 @@
                                         {{-- Actions --}}
                                         <td class="px-8 py-6 text-right">
                                             <div class="flex items-center justify-end gap-2" onclick="event.stopPropagation()">
+                                                @unless(auth()->user()->role == 'direksi')
+                                                    <div class="relative group">
+                                                        <button type="button"
+                                                            onclick="event.stopPropagation(); openEditDataModal('draft', { id: {{ $draft->id }}, userId: @js($draft->user_id ?? ''), description: @js($draft->description ?? ''), deadline: @js($draft->deadline ? \Carbon\Carbon::parse($draft->deadline)->format('Y-m-d') : ''), notes: @js($draft->notes ?? '') })"
+                                                            class="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-indigo-600 hover:text-white transition">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.75 20.25H3v-3.75L16.862 4.487Z" />
+                                                            </svg>
+                                                        </button>
+                                                        <div class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
+                                                            Edit Data
+                                                        </div>
+                                                    </div>
+                                                @endunless
                                                 <button type="button"
                                                     class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-xs transition">
                                                     Checklist ({{ $draft->checklists->count() }})
@@ -320,8 +335,9 @@
 
                                                                 {{-- Nama --}}
                                                                 <td class="px-6 py-5">
-                                                                    <p class="font-semibold text-slate-800 text-sm">
-                                                                        {{ $checklist->title }}</p>
+                                                                    <p class="font-semibold text-slate-800 text-sm leading-relaxed">
+                                                                        {{ $checklist->title }}
+                                                                    </p>
                                                                 </td>
 
                                                                 {{-- File --}}
@@ -431,6 +447,23 @@
                                                                         <div class="relative group">
                                                                             @unless(auth()->user()->role == 'direksi')
                                                                                 <button type="button"
+                                                                                    onclick="event.stopPropagation(); openEditDataModal('checklist', { id: {{ $checklist->id }}, title: @js($checklist->title) })"
+                                                                                    class="flex h-10 w-10 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition">
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.75 20.25H3v-3.75L16.862 4.487Z" />
+                                                                                    </svg>
+                                                                                </button>
+                                                                            @endunless
+                                                                            <div
+                                                                                class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-indigo-600 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
+                                                                                Edit Nama Checklist
+                                                                            </div>
+
+                                                                        </div>
+
+                                                                        <div class="relative group">
+                                                                            @unless(auth()->user()->role == 'direksi')
+                                                                                <button type="button"
                                                                                     onclick="deleteChecklist({{ $checklist->id }})"
                                                                                     class="flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition">
                                                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -441,10 +474,10 @@
                                                                                     </svg>
                                                                                 </button>
                                                                             @endunless
-                                                                            <div
-                                                                                class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-red-600 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
-                                                                                Hapus Checklist
-                                                                            </div>
+                                                                                <div
+                                                                                    class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-red-600 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
+                                                                                    Hapus Checklist
+                                                                                </div>
                                                                         </div>
 
                                                                     </div>
@@ -909,14 +942,11 @@
                                                                     {{-- Todoo --}}
                                                                     <td class="px-5 py-5">
                                                                         <div class="space-y-3">
-
-
-
-                                                                            <p class="text-sm text-slate-600 leading-relaxed">
-                                                                                {{ $assignment->description ?? '-' }}
-                                                                            </p>
-
-
+                                                                            <div class="flex items-start justify-between gap-3">
+                                                                                <p class="text-sm text-slate-600 leading-relaxed">
+                                                                                    {{ $assignment->description ?? '-' }}
+                                                                                </p>
+                                                                            </div>
                                                                         </div>
                                                                     </td>
 
@@ -930,10 +960,12 @@
 
                                                                             <div class="min-w-0">
 
-                                                                                <p
-                                                                                    class="text-sm font-semibold leading-relaxed {{ $c->is_done ? 'text-slate-500 line-through' : 'text-slate-800' }}">
-                                                                                    {{ $c->title }}
-                                                                                </p>
+                                                                                <div class="flex items-start justify-between gap-3">
+                                                                                    <p
+                                                                                        class="text-sm font-semibold leading-relaxed {{ $c->is_done ? 'text-slate-500 line-through' : 'text-slate-800' }}">
+                                                                                        {{ $c->title }}
+                                                                                    </p>
+                                                                                </div>
 
                                                                                 <p
                                                                                     class="text-xs mt-1 {{ $c->is_done ? 'text-emerald-600' : 'text-slate-500' }}">
@@ -1051,6 +1083,30 @@
                                                                         <td class="px-5 py-5">
 
                                                                             <div class="flex items-center justify-center gap-2">
+
+                                                                                {{-- Edit Checklist --}}
+                                                                                <div class="relative group">
+
+                                                                                    <button type="button"
+                                                                                        onclick="event.stopPropagation(); openEditDataModal('checklist', { id: {{ $c->id }}, title: @js($c->title) })"
+                                                                                        class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white transition">
+
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                                            viewBox="0 0 24 24" stroke-width="1.8"
+                                                                                            stroke="currentColor" class="h-5 w-5">
+                                                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.75 20.25H3v-3.75L16.862 4.487Z" />
+                                                                                        </svg>
+
+                                                                                    </button>
+
+                                                                                    {{-- Tooltip --}}
+                                                                                    <div
+                                                                                        class="absolute -top-11 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover:opacity-100">
+                                                                                        Edit Checklist
+                                                                                    </div>
+
+                                                                                </div>
 
                                                                                 {{-- Reply --}}
                                                                                 <div class="relative group">
@@ -1397,6 +1453,183 @@
             </div>
         </div>
 
+        <div id="projectEditModalWrapper" onclick="hideProjectEditModal()"
+            class="fixed inset-0 z-[55] hidden flex items-center justify-center bg-slate-900/50 p-4">
+            <div onclick="event.stopPropagation()"
+                class="w-full max-w-2xl overflow-hidden rounded-[32px] bg-white shadow-2xl border border-slate-200">
+                <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Project</p>
+                        <h2 class="text-2xl font-black text-slate-900">Edit Project</h2>
+                    </div>
+                    <button type="button" onclick="hideProjectEditModal()"
+                        class="text-slate-500 hover:text-slate-900 text-2xl leading-none">✕</button>
+                </div>
+
+                <div class="p-6">
+                    <form id="projectEditForm" class="space-y-5">
+                        @csrf
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" id="projectEditId" value="{{ $task->id }}">
+
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Title</label>
+                            <input id="projectEditTitle" name="title" type="text"
+                                class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100">
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Description</label>
+                            <textarea id="projectEditDescription" name="description" rows="4"
+                                class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100"></textarea>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="text-sm font-semibold text-slate-700">Priority</label>
+                                <select id="projectEditPriority" name="priority"
+                                    class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-slate-700">Status</label>
+                                <select id="projectEditStatus" name="status"
+                                    class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100">
+                                    <option value="pending">Pending</option>
+                                    <option value="progress">Progress</option>
+                                    <option value="done">Done</option>
+                                    <option value="reject">Reject</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 pt-2">
+                            <button type="button" onclick="hideProjectEditModal()"
+                                class="flex-1 rounded-3xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="submitProjectEdit()"
+                                class="flex-1 rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition">
+                                Save Project
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="draftEditModalWrapper" onclick="hideDraftEditModal()"
+            class="fixed inset-0 z-[55] hidden flex items-center justify-center bg-slate-900/50 p-4">
+            <div onclick="event.stopPropagation()"
+                class="w-full max-w-2xl overflow-hidden rounded-[32px] bg-white shadow-2xl border border-slate-200">
+                <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Task Draft</p>
+                        <h2 class="text-2xl font-black text-slate-900">Edit Task Draft</h2>
+                    </div>
+                    <button type="button" onclick="hideDraftEditModal()"
+                        class="text-slate-500 hover:text-slate-900 text-2xl leading-none">✕</button>
+                </div>
+
+                <div class="p-6">
+                    <form id="draftEditForm" class="space-y-5">
+                        @csrf
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" id="draftEditId" value="">
+
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Assign to Member</label>
+                            <select id="draftEditUserId" name="user_id"
+                                class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100">
+                                <option value="">Unassigned</option>
+                                @foreach($task->users as $member)
+                                    <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Description</label>
+                            <textarea id="draftEditDescription" name="description" rows="4"
+                                class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100"></textarea>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div>
+                                <label class="text-sm font-semibold text-slate-700">Deadline</label>
+                                <input id="draftEditDeadline" name="deadline" type="date"
+                                    class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-slate-700">Notes</label>
+                                <input id="draftEditNotes" name="notes" type="text"
+                                    class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 pt-2">
+                            <button type="button" onclick="hideDraftEditModal()"
+                                class="flex-1 rounded-3xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="submitDraftEdit()"
+                                class="flex-1 rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition">
+                                Save Task Draft
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="checklistEditModalWrapper" onclick="hideChecklistEditModal()"
+            class="fixed inset-0 z-[55] hidden flex items-center justify-center bg-slate-900/50 p-4">
+            <div onclick="event.stopPropagation()"
+                class="w-full max-w-lg overflow-hidden rounded-[32px] bg-white shadow-2xl border border-slate-200">
+                <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-5">
+                    <div>
+                        <p class="text-sm uppercase tracking-[0.2em] text-slate-400">Checklist</p>
+                        <h2 class="text-2xl font-black text-slate-900">Edit Checklist</h2>
+                    </div>
+                    <button type="button" onclick="hideChecklistEditModal()"
+                        class="text-slate-500 hover:text-slate-900 text-2xl leading-none">✕</button>
+                </div>
+
+                <div class="p-6">
+                    <form id="checklistEditForm" class="space-y-5">
+                        @csrf
+                        <input type="hidden" name="_method" value="PUT">
+                        <input type="hidden" id="checklistEditId" value="">
+
+                        <div>
+                            <label class="text-sm font-semibold text-slate-700">Checklist Title</label>
+                            <input id="checklistEditTitle" name="title" type="text"
+                                class="mt-2 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100">
+                        </div>
+
+                        <div class="flex gap-3 pt-2">
+                            <button type="button" onclick="hideChecklistEditModal()"
+                                class="flex-1 rounded-3xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">
+                                Cancel
+                            </button>
+                            <button type="button" onclick="submitChecklistEdit()"
+                                class="flex-1 rounded-3xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700 transition">
+                                Save Checklist
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @include('project.component.edit-data-modal', [
+            'projectEditUsers' => $users,
+            'draftEditUsers' => $task->users,
+        ])
+
         <div id="chatPanel" class="fixed right-0 top-0 h-full z-50 hidden w-[420px] bg-white shadow-2xl flex flex-col">
             <div
                 class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-4 text-white flex items-center justify-between">
@@ -1600,9 +1833,12 @@
             let currentReply = null;
             const currentUserId = {{ auth()->id() }};
             const currentTaskId = {{ $task->id }};
+            const tabStorageKey = `project-detail-tab-${currentTaskId}`;
 
             /* ─── Tab ───────────────────────────────────────────────── */
             function switchTab(tab) {
+                sessionStorage.setItem(tabStorageKey, tab);
+
                 ['overview', 'addtask', 'assignments', 'supervisor'].forEach(key => {
                     const s = document.getElementById('tab-' + key);
                     const b = document.getElementById('tab-button-' + key);
@@ -1625,7 +1861,12 @@
 
             /* ─── Pagination ─────────────────────────────────────────── */
             window.addEventListener('DOMContentLoaded', () => {
-                switchTab('overview');
+                const savedTab = sessionStorage.getItem(tabStorageKey);
+                const initialTab = ['overview', 'addtask', 'assignments', 'supervisor'].includes(savedTab)
+                    ? savedTab
+                    : 'overview';
+
+                switchTab(initialTab);
                 initAssignmentPagination();
 
                 const saveForm = document.getElementById('saveAssignmentForm');
@@ -1882,6 +2123,123 @@
         `;
 
                 container.appendChild(wrapper);
+            }
+
+            function openProjectEditModal(taskId, title, description, priority, status) {
+                if (isDireksi) return;
+                document.getElementById('projectEditId').value = taskId;
+                document.getElementById('projectEditTitle').value = title || '';
+                document.getElementById('projectEditDescription').value = description || '';
+                document.getElementById('projectEditPriority').value = priority || 'medium';
+                document.getElementById('projectEditStatus').value = status || 'pending';
+                document.getElementById('projectEditModalWrapper').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function hideProjectEditModal() {
+                document.getElementById('projectEditModalWrapper').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            async function submitProjectEdit() {
+                const taskId = document.getElementById('projectEditId').value;
+                const form = document.getElementById('projectEditForm');
+                const formData = new FormData(form);
+                try {
+                    const response = await fetch(`/project/${taskId}`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        hideProjectEditModal();
+                        gToast.success('Project diperbarui', data.message || 'Project berhasil diupdate.');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        gModal.alert(data.message || 'Gagal mengupdate project.', 'warning');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    gModal.alert('Terjadi kesalahan saat mengupdate project.', 'warning');
+                }
+            }
+
+            function openDraftEditModal(draftId, userId, description, deadline, notes) {
+                if (isDireksi) return;
+                document.getElementById('draftEditId').value = draftId;
+                document.getElementById('draftEditUserId').value = userId || '';
+                document.getElementById('draftEditDescription').value = description || '';
+                document.getElementById('draftEditDeadline').value = deadline || '';
+                document.getElementById('draftEditNotes').value = notes || '';
+                document.getElementById('draftEditModalWrapper').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function hideDraftEditModal() {
+                document.getElementById('draftEditModalWrapper').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            async function submitDraftEdit() {
+                const draftId = document.getElementById('draftEditId').value;
+                const form = document.getElementById('draftEditForm');
+                const formData = new FormData(form);
+                try {
+                    const response = await fetch(`/project/assignment/${draftId}`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        hideDraftEditModal();
+                        gToast.success('Task draft diperbarui', data.message || 'Task draft berhasil diupdate.');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        gModal.alert(data.message || 'Gagal mengupdate task draft.', 'warning');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    gModal.alert('Terjadi kesalahan saat mengupdate task draft.', 'warning');
+                }
+            }
+
+            function openChecklistEditModal(checklistId, title) {
+                if (isDireksi) return;
+                document.getElementById('checklistEditId').value = checklistId;
+                document.getElementById('checklistEditTitle').value = title || '';
+                document.getElementById('checklistEditModalWrapper').classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function hideChecklistEditModal() {
+                document.getElementById('checklistEditModalWrapper').classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            async function submitChecklistEdit() {
+                const checklistId = document.getElementById('checklistEditId').value;
+                const form = document.getElementById('checklistEditForm');
+                const formData = new FormData(form);
+                try {
+                    const response = await fetch(`/project/checklist/${checklistId}`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        hideChecklistEditModal();
+                        gToast.success('Checklist diperbarui', data.message || 'Checklist berhasil diupdate.');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        gModal.alert(data.message || 'Gagal mengupdate checklist.', 'warning');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    gModal.alert('Terjadi kesalahan saat mengupdate checklist.', 'warning');
+                }
             }
 
             /* ─── Send message ───────────────────────────────────────── */
@@ -2264,6 +2622,13 @@
                     gModal.alert('Terjadi kesalahan.', 'warning');
                 }
             }
+
+            window.openProjectEditModal = openProjectEditModal;
+            window.hideProjectEditModal = hideProjectEditModal;
+            window.openDraftEditModal = openDraftEditModal;
+            window.hideDraftEditModal = hideDraftEditModal;
+            window.openChecklistEditModal = openChecklistEditModal;
+            window.hideChecklistEditModal = hideChecklistEditModal;
         </script>
 
 @endsection
