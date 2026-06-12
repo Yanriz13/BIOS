@@ -21,14 +21,14 @@ class HomeController extends Controller
         $checklistQuery  = TaskChecklist::query();
         $employeeQuery   = User::where('role', 'staff');
 
-        if (in_array($user->role, ['manager', 'supervisor'])) {
+        if (in_array($user->role, ['admin_divisi', 'supervisor'])) {
             $taskQuery->where('divisi', $user->divisi);
             $assignmentQuery->whereHas('task', fn($q) => $q->where('divisi', $user->divisi));
             $checklistQuery->whereHas('assignment.task', fn($q) => $q->where('divisi', $user->divisi));
             $employeeQuery->where('divisi', $user->divisi);
             $scopeTitle = 'Divisi ' . $user->divisi;
 
-        } elseif ($user->role === 'direksi') {
+        } elseif (in_array($user->role, ['direksi', 'manager'])) {
             $scopeTitle = 'Semua Divisi';
 
         } else {
@@ -197,7 +197,7 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
     ->where('longitude', '!=', '')
     ->where('is_done', true);
 
-        if ($user->role === 'manager') {
+                if ($user->role === 'admin_divisi') {
             $dailyLocationQuery->whereHas('routine.user', fn($q) =>
                 $q->where('divisi', $user->divisi)
                   ->whereIn('role', ['staff', 'supervisor'])
@@ -239,7 +239,7 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
-        if (in_array($user->role, ['manager', 'supervisor'])) {
+        if (in_array($user->role, ['admin_divisi', 'supervisor'])) {
             $taskChecklistQuery->whereHas('assignment.task', fn($q) =>
                 $q->where('divisi', $user->divisi)
             );

@@ -12,7 +12,7 @@
                 <p class="text-slate-500 mt-1">Drag & Drop Task Management System</p>
             </div>
 
-            @unless(auth()->user()->role == 'direksi')
+            @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                 <button onclick="openAddTaskModal()"
                     class="h-14 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xl transition">
                     + Add Task
@@ -489,8 +489,8 @@
     {{-- SCRIPT --}}
     {{-- ========================================= --}}
     <script>
-        const isDireksi = @json(auth()->user()->role === 'direksi');
-        const canEditProject = @json(auth()->user()->role !== 'direksi');
+        const isReadOnlyProject = @json(in_array(auth()->user()->role, ['direksi', 'manager']));
+        const canEditProject = @json(auth()->user()->role === 'admin_divisi');
         let editingTaskId = null;
         let editingTaskUserIds = [];
 
@@ -513,7 +513,7 @@
         // ADD TASK MODAL
         // =====================
         function openAddTaskModal() {
-            if (isDireksi) return;
+            if (isReadOnlyProject) return;
             const el = document.getElementById('addTaskModal');
             el.classList.remove('hidden');
             el.classList.add('flex');
@@ -585,19 +585,19 @@
         // DRAG & DROP
         // =====================
         function allowDrop(ev) {
-            if (isDireksi) return;
+            if (isReadOnlyProject) return;
             ev.preventDefault();
         }
 
         function drag(ev) {
-            if (isDireksi) return false;
+            if (isReadOnlyProject) return false;
             if (ev.target.closest('button, a, input, textarea, select, label')) return false;
             const taskCard = ev.target.closest('.task-card');
             if (taskCard) ev.dataTransfer.setData("text", taskCard.id);
         }
 
         function drop(ev) {
-            if (isDireksi) return;
+            if (isReadOnlyProject) return;
             ev.preventDefault();
             const data = ev.dataTransfer.getData("text");
             const task = document.getElementById(data);

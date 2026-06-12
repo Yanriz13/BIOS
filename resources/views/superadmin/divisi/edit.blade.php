@@ -1,7 +1,18 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $backUrl = url()->previous() ?: route('superadmin.divisi.index');
+@endphp
 <div class="container mx-auto py-10">
+    <div class="mx-auto mb-4 max-w-xl">
+        <a href="{{ $backUrl }}"
+           class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+            <span>←</span>
+            <span>Back</span>
+        </a>
+    </div>
+
     <div class="bg-white rounded-2xl shadow-lg p-8 max-w-xl mx-auto">
 
         <h1 class="text-3xl font-bold mb-2">Edit Divisi</h1>
@@ -51,11 +62,11 @@
             </div>
 
             <div class="mt-8 flex justify-end gap-3">
-                <a href="{{ route('superadmin.divisi.index') }}"
-                   class="bg-gray-200 hover:bg-gray-300 px-5 py-3 rounded-xl">
+                <a href="{{ $backUrl }}"
+                   class="inline-flex h-11 items-center rounded-2xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                     Kembali
                 </a>
-                <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl">
+                <button class="inline-flex h-11 items-center rounded-2xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
                     Update Divisi
                 </button>
             </div>

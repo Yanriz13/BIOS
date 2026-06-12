@@ -1,16 +1,26 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $backUrl = url()->previous() ?: route('superadmin.dashboard');
+@endphp
 <div class="container mx-auto py-10">
 
     {{-- Header --}}
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">Manajemen Divisi</h1>
-            <p class="text-slate-500 text-sm mt-1">Kelola divisi yang tersedia di sistem</p>
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-start gap-3">
+            <a href="{{ $backUrl }}"
+               class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                <span>←</span>
+                <span>Back</span>
+            </a>
+            <div class="pt-0.5">
+                <h1 class="text-2xl font-bold text-slate-800">Manajemen Divisi</h1>
+                <p class="mt-1 text-sm text-slate-500">Kelola divisi yang tersedia di sistem</p>
+            </div>
         </div>
         <a href="{{ route('superadmin.divisi.create') }}"
-           class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl">
+           class="inline-flex h-11 items-center rounded-2xl bg-blue-600 px-5 text-white shadow-sm transition hover:bg-blue-700">
             + Tambah Divisi
         </a>
     </div>

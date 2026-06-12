@@ -26,9 +26,9 @@ class LoginController extends Controller
 
         }
         // =========================
-// DIREKSI & MANAGER
+// DIREKSI, MANAGER & ADMIN DIVISI
 // =========================
-        if (in_array($user->role, ['direksi', 'manager'])) {
+        if (in_array($user->role, ['direksi', 'manager', 'admin_divisi'])) {
 
             return redirect()->route(
                 'manager.dashboard'

@@ -103,6 +103,11 @@
                             Manager
                         </option>
 
+                        <option value="admin_divisi"
+                            {{ $user->role == 'admin_divisi' ? 'selected' : '' }}>
+                            Admin Divisi
+                        </option>
+
                         <option value="supervisor"
                             {{ $user->role == 'supervisor' ? 'selected' : '' }}>
                             Supervisor

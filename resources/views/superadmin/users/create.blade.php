@@ -35,7 +35,7 @@
                 <div>
                     <label class="font-semibold">Role</label>
                     <select name="role" class="w-full border rounded-xl px-4 py-3 mt-2">
-                        @foreach(['direksi','manager','supervisor','staff'] as $role)
+                        @foreach(['direksi','manager','admin_divisi','supervisor','staff'] as $role)
                             <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
                                 {{ ucfirst($role) }}
                             </option>

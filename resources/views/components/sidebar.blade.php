@@ -62,9 +62,9 @@
 
 
             {{-- ====================================================== --}}
-            {{-- DIREKSI & MANAGER --}}
+            {{-- DIREKSI, MANAGER & ADMIN DIVISI --}}
             {{-- ====================================================== --}}
-            @if(in_array(auth()->user()->role, ['manager', 'direksi']))
+            @if(in_array(auth()->user()->role, ['admin_divisi', 'manager', 'direksi']))
 
 
                 {{-- DASHBOARD --}}
@@ -76,7 +76,7 @@
                         🏠</div>
                     <div>
                         <p class="font-bold">Dashboard</p>
-                        <small class="opacity-70">Manager overview</small>
+                        <small class="opacity-70">Division overview</small>
                     </div>
                 </a>
 

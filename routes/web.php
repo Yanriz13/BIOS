@@ -10,7 +10,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SuperAdmin\DivisiController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Auth::routes();
@@ -29,9 +29,9 @@ Route::middleware(['auth', 'role:super_admin'])
     });
 
 // =============================
-// DIREKSI & MANAGER
+// DIREKSI, MANAGER (READ-ONLY) & ADMIN DIVISI
 // =============================
-Route::middleware(['auth', 'role:manager,direksi'])
+Route::middleware(['auth', 'role:admin_divisi,manager,direksi'])
     ->group(function () {
 
         Route::get('/manager/dashboard', [HomeController::class, 'index'])
@@ -40,12 +40,15 @@ Route::middleware(['auth', 'role:manager,direksi'])
         Route::get('/manager/management-tim', [HomeController::class, 'managementTeam'])
             ->name('manager.management.team');
 
+    });
+
+Route::middleware(['auth', 'role:admin_divisi'])
+    ->group(function () {
         Route::post('/manager/management-tim/assign', [HomeController::class, 'assignSupervisor'])
             ->name('manager.management.team.assign');
 
         Route::post('/manager/management-tim/assign-multiple', [HomeController::class, 'assignMultipleToSupervisor'])
             ->name('manager.management.team.assign-multiple');
-
     });
 
 
@@ -90,9 +93,9 @@ Route::middleware(['auth', 'role:super_admin'])
 
 
 // ======================================================
-// PROJECT VIEW (MANAGER + DIREKSI)
+// PROJECT VIEW (ADMIN DIVISI + MANAGER + DIREKSI)
 // ======================================================
-Route::middleware(['auth', 'role:manager,direksi'])
+Route::middleware(['auth', 'role:admin_divisi,manager,direksi'])
     ->group(function () {
 
         Route::get('/project', [ProjectController::class, 'index'])
@@ -105,9 +108,9 @@ Route::middleware(['auth', 'role:manager,direksi'])
 
 
 // ======================================================
-// PROJECT ACTION (MANAGER ONLY)
+// PROJECT ACTION (ADMIN DIVISI ONLY)
 // ======================================================
-Route::middleware(['auth', 'role:manager'])
+Route::middleware(['auth', 'role:admin_divisi'])
     ->group(function () {
 
         Route::post('/project/store', [ProjectController::class, 'store'])
@@ -207,7 +210,7 @@ Route::middleware(['auth'])->group(function () {
 // ======================================================
 Route::prefix('project/daily-routine')
     ->name('daily-routine.')
-    ->middleware(['auth', 'role:manager,direksi,supervisor,staff'])
+    ->middleware(['auth', 'role:admin_divisi,manager,direksi,supervisor,staff'])
     ->group(function () {
 
         Route::get('/', [DailyRoutineController::class, 'index'])
@@ -220,11 +223,11 @@ Route::prefix('project/daily-routine')
 
 
 // ======================================================
-// DAILY ROUTINE ACTION (MANAGER ONLY)
+// DAILY ROUTINE ACTION (ADMIN DIVISI & SUPERVISOR)
 // ======================================================
 Route::prefix('project/daily-routine')
     ->name('daily-routine.')
-    ->middleware(['auth', 'role:manager,supervisor'])
+    ->middleware(['auth', 'role:admin_divisi,supervisor'])
     ->group(function () {
 
         Route::post('/', [DailyRoutineController::class, 'store'])

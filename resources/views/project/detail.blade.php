@@ -82,7 +82,7 @@
                     class="tab-button px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">
                     Team
                 </button>
-                @unless(auth()->user()->role == 'direksi')
+                @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                     <button type="button" onclick="switchTab('addtask')" id="tab-button-addtask"
                         class="tab-button px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">
                         Add Member
@@ -173,7 +173,7 @@
                                 <h3 class="text-lg font-bold text-slate-800">{{ $allDrafts->count() }} Drafts</h3>
                             </div>
                         </div>
-                        @unless(auth()->user()->role == 'direksi')
+                        @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                             <button type="button" onclick="showTaskAssignForm()"
                                 class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-indigo-100 hover:scale-[1.02]">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -283,7 +283,7 @@
                                         {{-- Actions --}}
                                         <td class="px-8 py-6 text-right">
                                             <div class="flex items-center justify-end gap-2" onclick="event.stopPropagation()">
-                                                @unless(auth()->user()->role == 'direksi')
+                                                @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                                                     <div class="relative group">
                                                         <button type="button"
                                                             onclick="event.stopPropagation(); openEditDataModal('draft', { id: {{ $draft->id }}, userId: @js($draft->user_id ?? ''), description: @js($draft->description ?? ''), deadline: @js($draft->deadline ? \Carbon\Carbon::parse($draft->deadline)->format('Y-m-d') : ''), notes: @js($draft->notes ?? '') })"
@@ -391,7 +391,7 @@
                                                                         @if(!$checklist->assignment || !$checklist->assignment->user_id)
                                                                             @if(!$checklist->assigned_user_id)
                                                                                 <div class="relative group">
-                                                                                    @unless(auth()->user()->role == 'direksi')
+                                                                                    @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                                                                                         <button type="button"
                                                                                             onclick="openAssignChecklistModal({{ $checklist->id }}, '{{ addslashes($checklist->title) }}', '{{ $draft->deadline ?? '' }}', '{{ addslashes($draft->description ?? '') }}', '{{ addslashes($draft->notes ?? '') }}')"
                                                                                             class="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white transition">
@@ -445,7 +445,7 @@
 
                                                                         {{-- Delete --}}
                                                                         <div class="relative group">
-                                                                            @unless(auth()->user()->role == 'direksi')
+                                                                            @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                                                                                 <button type="button"
                                                                                     onclick="event.stopPropagation(); openEditDataModal('checklist', { id: {{ $checklist->id }}, title: @js($checklist->title) })"
                                                                                     class="flex h-10 w-10 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition">
@@ -462,7 +462,7 @@
                                                                         </div>
 
                                                                         <div class="relative group">
-                                                                            @unless(auth()->user()->role == 'direksi')
+                                                                            @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                                                                                 <button type="button"
                                                                                     onclick="deleteChecklist({{ $checklist->id }})"
                                                                                     class="flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition">
@@ -881,7 +881,7 @@
                                 <td class="p-6">
 
                                     <div class="flex flex-wrap gap-3">
-                                        @unless(auth()->user()->role == 'direksi')
+                                        @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                                             <button
                                                 onclick="event.stopPropagation(); showAssignForm({{ $user->id }}, '{{ addslashes($user->name) }}')"
                                                 class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-2xl font-semibold transition">
@@ -921,7 +921,7 @@
                                                         <th class="w-[12%] px-5 py-4 text-left font-bold">
                                                             Status
                                                         </th>
-                                                        @unless(auth()->user()->role == 'direksi')
+                                                        @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                                                             <th class="w-[14%] px-5 py-4 text-center font-bold">
                                                                 Action
                                                             </th>
@@ -1079,7 +1079,7 @@
 
                                                                     {{-- Action --}}
                                                                     {{-- Action --}}
-                                                                    @unless(auth()->user()->role == 'direksi')
+                                                                    @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
                                                                         <td class="px-5 py-5">
 
                                                                             <div class="flex items-center justify-center gap-2">
