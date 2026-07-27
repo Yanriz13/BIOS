@@ -92,31 +92,22 @@
                         name="role"
                         class="w-full mt-2 border border-slate-300 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     >
-
-                        <option value="direksi"
-                            {{ $user->role == 'direksi' ? 'selected' : '' }}>
-                            Direksi
-                        </option>
-
-                        <option value="manager"
-                            {{ $user->role == 'manager' ? 'selected' : '' }}>
-                            Manager
-                        </option>
-
-                        <option value="admin_divisi"
-                            {{ $user->role == 'admin_divisi' ? 'selected' : '' }}>
-                            Admin Divisi
-                        </option>
-
-                        <option value="supervisor"
-                            {{ $user->role == 'supervisor' ? 'selected' : '' }}>
-                            Supervisor
-                        </option>
-
-                        <option value="staff"
-                            {{ $user->role == 'staff' ? 'selected' : '' }}>
-                            Staff
-                        </option>
+                        @php
+                            $roles = [
+                                'direksi'    => 'Direksi',
+                                'gh'         => 'GH (Group Head)',
+                                'div_head'   => 'Div Head (Division Head)',
+                                'dept_head'  => 'Dept Head (Department Head)',
+                                'admin_dept' => 'Admin Dept',
+                                'staff'      => 'Staff',
+                                'super_admin'=> 'Super Admin',
+                            ];
+                        @endphp
+                        @foreach($roles as $key => $label)
+                            <option value="{{ $key }}" {{ old('role', $user->role) == $key ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
 
                     </select>
 
@@ -131,6 +122,7 @@
 
                     <select
                         name="divisi_id"
+                        id="divisi_id"
                         class="w-full mt-2 border border-slate-300 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     >
                         <option value="">-- Pilih Divisi --</option>
@@ -144,8 +136,31 @@
 
                 </div>
 
+                {{-- DEPARTEMEN --}}
+                <div>
+
+                    <label class="font-bold text-slate-700">
+                        Departemen
+                    </label>
+
+                    <select
+                        name="departemen_id"
+                        id="departemen_id"
+                        class="w-full mt-2 border border-slate-300 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    >
+                        <option value="">-- Pilih Departemen --</option>
+                        @foreach($departemens as $dept)
+                            <option value="{{ $dept->id }}"
+                                {{ old('departemen_id', $user->departemen_id) == $dept->id ? 'selected' : '' }}>
+                                {{ $dept->nama }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                </div>
+
                 {{-- PASSWORD --}}
-                <div class="md:col-span-2">
+                <div>
 
                     <label class="font-bold text-slate-700">
                         Password Baru
@@ -189,5 +204,26 @@
     </div>
 
 </div>
+
+<script>
+document.getElementById('divisi_id').addEventListener('change', function() {
+    const divisiId = this.value;
+    const deptSelect = document.getElementById('departemen_id');
+    deptSelect.innerHTML = '<option value="">-- Pilih Departemen --</option>';
+
+    if (divisiId) {
+        fetch(`/super-admin/divisi/${divisiId}/departemens`)
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(dept => {
+                    const opt = document.createElement('option');
+                    opt.value = dept.id;
+                    opt.textContent = dept.nama;
+                    deptSelect.appendChild(opt);
+                });
+            });
+    }
+});
+</script>
 
 @endsection

@@ -19,43 +19,28 @@ class LoginController extends Controller
         // SUPER ADMIN
         // =========================
         if ($user->role == 'super_admin') {
-
-            return redirect()->route(
-                'superadmin.users.index'
-            );
-
+            return redirect()->route('superadmin.users.index');
         }
-        // =========================
-// DIREKSI, MANAGER & ADMIN DIVISI
-// =========================
-        if (in_array($user->role, ['direksi', 'manager', 'admin_divisi'])) {
 
-            return redirect()->route(
-                'manager.dashboard'
-            );
-
+        // ==========================================
+        // DIREKSI, GH, DIV HEAD, ADMIN DEPT
+        // ==========================================
+        if (in_array($user->role, ['direksi', 'gh', 'div_head', 'admin_dept'])) {
+            return redirect()->route('divhead.dashboard');
         }
 
         // =========================
-        // SUPERVISOR
+        // DEPT HEAD
         // =========================
-        if ($user->role == 'supervisor') {
-
-            return redirect()->route(
-                'supervisor.project.index'
-            );
-
+        if (in_array($user->role, ['dept_head'])) {
+            return redirect()->route('depthead.project.index');
         }
 
         // =========================
         // STAFF
         // =========================
         if ($user->role == 'staff') {
-
-            return redirect()->route(
-                'staff.project.index'
-            );
-
+            return redirect()->route('staff.project.index');
         }
 
         return redirect('/');

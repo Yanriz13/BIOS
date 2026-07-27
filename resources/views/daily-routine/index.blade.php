@@ -45,7 +45,7 @@
             <div class="flex items-center gap-3">
                 <input id="searchRoutine" type="search" placeholder="Cari routine..."
                     class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-violet-500 focus:bg-white focus:outline-none w-48">
-                @if(in_array(auth()->user()->role, ['admin_divisi', 'supervisor']))
+                @if(in_array(auth()->user()->role, ['admin_dept']))
                     <button onclick="showDailyRoutineForm()"
                         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition whitespace-nowrap shadow-lg shadow-violet-100">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,7 +100,7 @@
 
 $overdue = strtolower($routine->deadline) === $today
     && $routine->status !== 'done';
-                                $isManager = auth()->user()->role === 'admin_divisi';
+                                $isManager = in_array(auth()->user()->role, ['admin_dept']);
                                 $isStaff = auth()->user()->role === 'staff';
                             @endphp
 
@@ -369,7 +369,7 @@ $overdue = strtolower($routine->deadline) === $today
                                                                 <th class="w-[15%] px-5 py-4 text-center font-bold">
                                                                     Status
                                                                 </th>
-                                                                @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                                @unless(in_array(auth()->user()->role, ['direksi', 'gh']))
                                                                     <th class="w-[15%] px-5 py-4 text-center font-bold">
                                                                         Action
                                                                     </th>
@@ -388,8 +388,8 @@ $overdue = strtolower($routine->deadline) === $today
                                                                                             {{-- CHECKBOX --}}
                                                                                             <td class="px-5 py-5 text-center align-top">
 
-                                                                                                <button {{ in_array(auth()->user()->role, ['direksi', 'manager']) ? 'disabled' : '' }}
-                                                                                                    @if(!in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                                                                <button {{ in_array(auth()->user()->role, ['direksi', 'gh']) ? 'disabled' : '' }}
+                                                                                                    @if(!in_array(auth()->user()->role, ['direksi', 'gh']))
                                                                                                         onclick="toggleChecklistItem({{ $cl->id }}, {{ $routine->id }}, {{ $cl->is_done ? 'true' : 'false' }})"
                                                                                                     @endif class="mx-auto flex h-6 w-6 items-center justify-center rounded-lg border-2 transition-all
 
@@ -397,7 +397,7 @@ $overdue = strtolower($routine->deadline) === $today
                                                                 ? 'border-emerald-500 bg-emerald-500 text-white'
                                                                 : 'border-slate-300 bg-white' }}
 
-                                                                                                                                                                                                    {{ in_array(auth()->user()->role, ['direksi', 'manager'])
+                                                                                                                                                                                                    {{ in_array(auth()->user()->role, ['direksi', 'gh'])
                                                                 ? 'cursor-not-allowed opacity-70'
                                                                 : 'hover:border-violet-400 cursor-pointer' }}">
 
@@ -437,7 +437,7 @@ $overdue = strtolower($routine->deadline) === $today
 
                                                                                                             <p
                                                                                                                 class="text-[11px] font-bold uppercase tracking-wide text-red-500">
-                                                                                                                Dibatalkan Manager
+                                                                                                                Dibatalkan Div Head / Admin
                                                                                                             </p>
 
                                                                                                             <p class="mt-1 text-xs text-red-600 leading-relaxed">
@@ -580,7 +580,7 @@ $overdue = strtolower($routine->deadline) === $today
                                                                                             </td>
 
                                                                                             {{-- ACTION --}}
-                                                                                            @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                                                            @unless(in_array(auth()->user()->role, ['direksi', 'gh']))
                                                                                                 <td class="px-5 py-5 text-center align-top">
 
                                                                                                     <div class="flex items-center justify-center gap-2">
@@ -716,10 +716,10 @@ $overdue = strtolower($routine->deadline) === $today
                     <div class="text-5xl mb-4">🔁</div>
                     <p class="font-black text-slate-700 text-lg">Belum ada Daily Routine</p>
                     <p class="text-sm text-slate-400 mt-1 mb-5">
-                        @if(in_array(auth()->user()->role, ['admin_divisi', 'supervisor'])) Buat routine pertama untuk tim kamu.
-                        @else Manager belum membuat routine untukmu. @endif
+                        @if(in_array(auth()->user()->role, ['admin_dept', 'div_head', 'dept_head'])) Buat routine pertama untuk tim kamu.
+                        @else Div Head atau Admin Dept belum membuat routine untukmu. @endif
                     </p>
-                    @if(in_array(auth()->user()->role, ['admin_divisi', 'supervisor']))
+                    @if(in_array(auth()->user()->role, ['admin_dept', 'div_head', 'dept_head']))
                         <button onclick="showDailyRoutineForm()"
                             class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-semibold transition">
                             + Create Routine
@@ -732,9 +732,9 @@ $overdue = strtolower($routine->deadline) === $today
     </div>
 
     {{-- ══════════════════════════════════════════════════════
-    MODAL: Create Daily Routine (Manager only)
+    MODAL: Create Daily Routine (Div Head & Admin Dept only)
     ══════════════════════════════════════════════════════ --}}
-    @if(in_array(auth()->user()->role, ['admin_divisi', 'supervisor']))
+    @if(in_array(auth()->user()->role, ['admin_dept', 'div_head', 'dept_head']))
         <div id="dailyRoutineModalWrapper" onclick="hideDailyRoutineForm()"
             class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
             <div onclick="event.stopPropagation()"
@@ -886,7 +886,7 @@ $overdue = strtolower($routine->deadline) === $today
         </div>
     @endif
 
-    {{-- MODAL: Manager Uncheck --}}
+    {{-- MODAL: Div Head / Admin Uncheck --}}
     <div id="drUncheckModal" onclick="hideDrUncheckModal()"
         class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
         <div onclick="event.stopPropagation()"
@@ -1075,7 +1075,7 @@ $overdue = strtolower($routine->deadline) === $today
                 if (data.success) {
                     setTimeout(() => location.reload(), 300);
                 } else {
-                    gModal.alert(data.message || 'Manager Tidak Bisa Melakukan Checklist Sendiri.', 'warning');
+                    gModal.alert(data.message || 'Div Head Tidak Bisa Melakukan Checklist Sendiri.', 'warning');
                 }
             } catch (e) { gModal.alert('Terjadi kesalahan.', 'warning'); }
         }
@@ -1264,7 +1264,7 @@ $overdue = strtolower($routine->deadline) === $today
             const reason = document.getElementById('drUncheckReason').value.trim();
             if (!reason) { document.getElementById('drUncheckError').classList.remove('hidden'); return; }
             try {
-                const res = await fetch(`/project/daily-routine/checklist/${id}/manager-uncheck`, {
+                const res = await fetch(`/project/daily-routine/checklist/${id}/divhead-uncheck`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
                     body: JSON.stringify({ reason }),

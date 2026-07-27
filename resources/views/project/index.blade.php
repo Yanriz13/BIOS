@@ -12,7 +12,7 @@
                 <p class="text-slate-500 mt-1">Drag & Drop Task Management System</p>
             </div>
 
-            @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+            @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                 <button onclick="openAddTaskModal()"
                     class="h-14 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-xl transition">
                     + Add Task
@@ -491,8 +491,8 @@
     {{-- SCRIPT --}}
     {{-- ========================================= --}}
     <script>
-        const isReadOnlyProject = @json(in_array(auth()->user()->role, ['direksi', 'manager']));
-        const canEditProject = @json(auth()->user()->role === 'admin_divisi');
+        const isReadOnlyProject = {{ json_encode(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head'])) }};
+        const canEditProject = @json(auth()->user()->role === 'admin_dept');
         let editingTaskId = null;
         let editingTaskUserIds = [];
 

@@ -83,7 +83,7 @@
                 </span>
             </div>
             <div class="flex items-center gap-2">
-                @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                     <button
                         type="button"
                         draggable="false"

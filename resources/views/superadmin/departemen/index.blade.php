@@ -1,0 +1,113 @@
+@extends('layouts.app')
+
+@section('content')
+@php
+    $backUrl = route('superadmin.users.index');
+@endphp
+<div class="container mx-auto py-10">
+
+    {{-- Header --}}
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-start gap-3">
+            <a href="{{ $backUrl }}"
+               class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                <x-icon name="back" class="w-4 h-4" />
+                <span>Back</span>
+            </a>
+            <div class="pt-0.5">
+                <h1 class="text-2xl font-bold text-slate-800">Manajemen Departemen</h1>
+                <p class="mt-1 text-sm text-slate-500">Kelola departemen di bawah divisi yang tersedia di sistem</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <a href="{{ route('superadmin.divisi.index') }}"
+               class="inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-slate-700 px-5 text-white shadow-sm transition hover:bg-slate-800">
+                <span>⚙ Kelola Divisi</span>
+            </a>
+            <a href="{{ route('superadmin.departemen.create') }}"
+               class="inline-flex h-11 items-center gap-2 rounded-2xl bg-blue-600 px-5 text-white shadow-sm transition hover:bg-blue-700">
+                <x-icon name="plus" class="w-4 h-4" />
+                <span>Tambah Departemen</span>
+            </a>
+        </div>
+    </div>
+
+    {{-- Alert --}}
+    @if(session('success'))
+        <div class="bg-green-100 text-green-700 p-4 rounded-xl mb-5">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="bg-red-100 text-red-700 p-4 rounded-xl mb-5">{{ session('error') }}</div>
+    @endif
+
+    {{-- Tabel --}}
+    <div class="bg-white rounded-2xl shadow overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-slate-900 text-white">
+                <tr>
+                    <th class="px-6 py-4 text-left">No</th>
+                    <th class="px-6 py-4 text-left">Nama Departemen</th>
+                    <th class="px-6 py-4 text-left">Divisi</th>
+                    <th class="px-6 py-4 text-left">Kode</th>
+                    <th class="px-6 py-4 text-left">Deskripsi</th>
+                    <th class="px-6 py-4 text-center">Jumlah User</th>
+                    <th class="px-6 py-4 text-center">Status</th>
+                    <th class="px-6 py-4 text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($departemens as $dept)
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="px-6 py-4">{{ $loop->iteration }}</td>
+                        <td class="px-6 py-4 font-semibold">{{ $dept->nama }}</td>
+                        <td class="px-6 py-4 font-medium text-slate-700">
+                            {{ $dept->divisi->nama ?? '-' }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-mono">
+                                {{ $dept->kode ?? '-' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-500 text-sm">{{ $dept->deskripsi ?? '-' }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                                {{ $dept->users_count }} user
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            @if($dept->is_active)
+                                <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">Aktif</span>
+                            @else
+                                <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm">Nonaktif</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-center space-x-2">
+                            <a href="{{ route('superadmin.departemen.edit', $dept->id) }}"
+                               class="bg-yellow-400 hover:bg-yellow-500 text-white px-4 py-2 rounded-lg">
+                                Edit
+                            </a>
+
+                            <form action="{{ route('superadmin.departemen.destroy', $dept->id) }}"
+                                  method="POST" class="inline-block">
+                                @csrf
+                                @method('DELETE')
+                                <button onclick="return confirm('Hapus departemen {{ $dept->nama }}?')"
+                                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                                    Hapus
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="8" class="px-6 py-10 text-center text-slate-400">
+                            Belum ada departemen. <a href="{{ route('superadmin.departemen.create') }}" class="text-blue-600 underline">Tambah sekarang</a>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+</div>
+@endsection

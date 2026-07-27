@@ -230,8 +230,7 @@
                                                                             class="mt-1.5 flex items-start gap-1.5 rounded-xl bg-red-50 border border-red-100 px-3 py-2">
                                                                             <span class="text-red-400 text-xs shrink-0 mt-0.5">⚠</span>
                                                                             <div>
-                                                                                <p class="text-xs font-semibold text-red-600">Alasan
-                                                                                    manager:</p>
+                                                                                <p class="text-xs font-semibold text-red-600">Alasan Div Head / Admin:</p>
                                                                                 <p class="text-xs text-red-500 mt-0.5 leading-relaxed">
                                                                                     {{ $checklist->uncheck_reason }}</p>
                                                                             </div>
@@ -584,7 +583,7 @@
                     </svg>
                 </div>
                 <p class="text-lg font-semibold text-slate-800">Belum ada daily routine</p>
-                <p class="mt-3 text-sm text-slate-500">Manager belum mengirimkan daily routine ke akun kamu.</p>
+                <p class="mt-3 text-sm text-slate-500">Div Head / Admin belum mengirimkan daily routine ke akun kamu.</p>
             </div>
         @endif
 

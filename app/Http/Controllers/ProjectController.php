@@ -14,12 +14,21 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        $divisi = auth()->user()->divisi;
+        $user = auth()->user();
+        $divisi = $user->divisi;
 
-        $tasks = Task::with(['users', 'assignments.checklists'])
-            ->where('divisi', $divisi)
-            ->latest()
-            ->get();
+        $tasksQuery = Task::with(['users', 'assignments.checklists'])
+            ->where('divisi', $divisi);
+
+        if ($user->role === 'admin_dept') {
+            $tasksQuery->where(function ($q) use ($user) {
+                $q->where('departemen_id', $user->departemen_id)
+                    ->orWhereNull('departemen_id'); // opsional: tampilkan task lama yang belum punya departemen_id
+            });
+        }
+
+        $tasks = $tasksQuery->latest()->get();
+
 
         $resolveTaskStatus = function (Task $task): string {
             $rawStatus = $task->getRawOriginal('status');
@@ -58,6 +67,14 @@ class ProjectController extends Controller
             return $task;
         });
 
+        $userQuery = User::where('role', 'staff');
+        if (auth()->user()->role === 'admin_dept') {
+            $userQuery->where('divisi_id', auth()->user()->divisi_id)
+                ->where('departemen_id', auth()->user()->departemen_id);
+        } else {
+            $userQuery->where('divisi', $divisi);
+        }
+
         return view('project.index', [
             'pendingTasks' => $tasks->filter(fn($task) => $task->status === 'pending')->values(),
 
@@ -67,9 +84,7 @@ class ProjectController extends Controller
 
             'rejectTasks' => $tasks->filter(fn($task) => $task->status === 'reject')->values(),
 
-            'users' => User::where('role', 'staff')
-                ->where('divisi', $divisi)
-                ->get(),
+            'users' => $userQuery->get(),
         ]);
     }
     public function store(Request $request)
@@ -88,13 +103,23 @@ class ProjectController extends Controller
             'priority' => $request->priority,
             'status' => 'pending',
             'divisi' => auth()->user()->divisi,
+            'departemen_id' => auth()->user()->role === 'admin_dept'
+                ? auth()->user()->departemen_id
+                : null,
         ]);
 
         if ($request->user_ids) {
-            $validUsers = User::whereIn('id', $request->user_ids)
-                ->where('role', 'staff')
-                ->where('divisi', auth()->user()->divisi)
-                ->pluck('id');
+            $validUsersQuery = User::whereIn('id', $request->user_ids)
+                ->where('role', 'staff');
+
+            if (auth()->user()->role === 'admin_dept') {
+                $validUsersQuery->where('divisi_id', auth()->user()->divisi_id)
+                    ->where('departemen_id', auth()->user()->departemen_id);
+            } else {
+                $validUsersQuery->where('divisi', auth()->user()->divisi);
+            }
+
+            $validUsers = $validUsersQuery->pluck('id');
 
             $task->users()->attach($validUsers);
         }
@@ -125,10 +150,17 @@ class ProjectController extends Controller
         ]);
 
         if ($request->has('user_ids')) {
-            $validUsers = User::whereIn('id', $request->user_ids ?? [])
-                ->where('role', 'staff')
-                ->where('divisi', $divisi)
-                ->pluck('id');
+            $validUsersQuery = User::whereIn('id', $request->user_ids ?? [])
+                ->where('role', 'staff');
+
+            if (auth()->user()->role === 'admin_dept') {
+                $validUsersQuery->where('divisi_id', auth()->user()->divisi_id)
+                    ->where('departemen_id', auth()->user()->departemen_id);
+            } else {
+                $validUsersQuery->where('divisi', $divisi);
+            }
+
+            $validUsers = $validUsersQuery->pluck('id');
 
             $task->users()->sync($validUsers);
         }
@@ -145,10 +177,18 @@ class ProjectController extends Controller
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
         ]);
-        $validUsers = User::whereIn('id', $request->user_ids)
-            ->where('role', 'staff')
-            ->where('divisi', auth()->user()->divisi)
-            ->pluck('id');
+
+        $validUsersQuery = User::whereIn('id', $request->user_ids)
+            ->where('role', 'staff');
+
+        if (auth()->user()->role === 'admin_dept') {
+            $validUsersQuery->where('divisi_id', auth()->user()->divisi_id)
+                ->where('departemen_id', auth()->user()->departemen_id);
+        } else {
+            $validUsersQuery->where('divisi', auth()->user()->divisi);
+        }
+
+        $validUsers = $validUsersQuery->pluck('id');
 
         $task = Task::findOrFail($id);
         $task->users()->syncWithoutDetaching($validUsers);
@@ -223,6 +263,14 @@ class ProjectController extends Controller
         $globalChatUnread = ChatNotification::where('user_id', auth()->id())
             ->whereNull('task_id')->where('is_read', false)->count();
 
+        $userQuery = User::where('role', 'staff');
+        if (auth()->user()->role === 'admin_dept') {
+            $userQuery->where('divisi_id', auth()->user()->divisi_id)
+                ->where('departemen_id', auth()->user()->departemen_id);
+        } else {
+            $userQuery->where('divisi', auth()->user()->divisi);
+        }
+
         return view('project.detail', compact(
             'task',
             'assignments',
@@ -234,12 +282,7 @@ class ProjectController extends Controller
             'overviewChecklistCount',
             'overviewAvgProgress'
         ))
-            ->with(
-                'users',
-                User::where('role', 'staff')
-                    ->where('divisi', auth()->user()->divisi)
-                    ->get()
-            );
+            ->with('users', $userQuery->get());
     }
 
     public function staffProject()
@@ -260,7 +303,7 @@ class ProjectController extends Controller
         return view('staff.project', compact('assignments', 'totalChecklist', 'completedChecklist'));
     }
 
-    public function supervisorProject()
+    public function deptheadProject()
     {
         $supervisor = auth()->user();
 
@@ -277,7 +320,7 @@ class ProjectController extends Controller
         // Group assignments by user_id
         $assignmentsByUser = $assignments->groupBy('user_id');
 
-        return view('supervisor.project', compact('staff', 'assignmentsByUser'));
+        return view('depthead.project', compact('staff', 'assignmentsByUser'));
     }
 
     public function toggleChecklist(Request $request, $id)
@@ -318,11 +361,17 @@ class ProjectController extends Controller
             'file' => 'nullable|file',
         ]);
         if ($request->filled('user_id')) {
+            $userQuery = User::where('id', $request->user_id)
+                ->where('role', 'staff');
 
-            $user = User::where('id', $request->user_id)
-                ->where('role', 'staff')
-                ->where('divisi', auth()->user()->divisi)
-                ->first();
+            if (auth()->user()->role === 'admin_dept') {
+                $userQuery->where('divisi_id', auth()->user()->divisi_id)
+                    ->where('departemen_id', auth()->user()->departemen_id);
+            } else {
+                $userQuery->where('divisi', auth()->user()->divisi);
+            }
+
+            $user = $userQuery->first();
 
             if (!$user) {
                 return response()->json([
@@ -377,15 +426,22 @@ class ProjectController extends Controller
         $assignment = TaskAssignment::with('task')->findOrFail($id);
 
         if ($request->filled('user_id')) {
-            $user = User::where('id', $request->user_id)
-                ->where('role', 'staff')
-                ->where('divisi', $assignment->task->divisi ?? auth()->user()->divisi)
-                ->first();
+            $userQuery = User::where('id', $request->user_id)
+                ->where('role', 'staff');
+
+            if (auth()->user()->role === 'admin_dept') {
+                $userQuery->where('divisi_id', auth()->user()->divisi_id)
+                    ->where('departemen_id', auth()->user()->departemen_id);
+            } else {
+                $userQuery->where('divisi', $assignment->task->divisi ?? auth()->user()->divisi);
+            }
+
+            $user = $userQuery->first();
 
             if (!$user) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Assignment hanya boleh untuk staff pada divisi yang sama.',
+                    'message' => 'Assignment hanya boleh untuk staff pada divisi atau departemen yang sama.',
                 ], 403);
             }
         }
@@ -458,10 +514,17 @@ class ProjectController extends Controller
         $request->validate([
             'assigned_user_id' => 'required|integer|exists:users,id',
         ]);
-        $user = User::where('id', $request->assigned_user_id)
-            ->where('role', 'staff')
-            ->where('divisi', auth()->user()->divisi)
-            ->first();
+        $userQuery = User::where('id', $request->assigned_user_id)
+            ->where('role', 'staff');
+
+        if (auth()->user()->role === 'admin_dept') {
+            $userQuery->where('divisi_id', auth()->user()->divisi_id)
+                ->where('departemen_id', auth()->user()->departemen_id);
+        } else {
+            $userQuery->where('divisi', auth()->user()->divisi);
+        }
+
+        $user = $userQuery->first();
         if (!$user) {
             return response()->json([
                 'success' => false,
@@ -584,10 +647,17 @@ class ProjectController extends Controller
             'deadline' => 'nullable|date',
             'notes' => 'nullable|string',
         ]);
-        $user = User::where('id', $request->user_id)
-            ->where('role', 'staff')
-            ->where('divisi', auth()->user()->divisi)
-            ->first();
+        $userQuery = User::where('id', $request->user_id)
+            ->where('role', 'staff');
+
+        if (auth()->user()->role === 'admin_dept') {
+            $userQuery->where('divisi_id', auth()->user()->divisi_id)
+                ->where('departemen_id', auth()->user()->departemen_id);
+        } else {
+            $userQuery->where('divisi', auth()->user()->divisi);
+        }
+
+        $user = $userQuery->first();
 
         if (!$user) {
             return response()->json([
@@ -650,66 +720,66 @@ class ProjectController extends Controller
             'message' => 'Checklist berhasil diupdate',
         ]);
     }
-public function uploadChecklistFile(Request $request, $id)
-{
-    $request->validate([
-        'file'      => 'required|file|mimes:jpg,jpeg,png,gif,webp,pdf,xls,xlsx|max:10240',
-        'latitude'  => 'nullable|numeric',
-        'longitude' => 'nullable|numeric',
-        'address'   => 'nullable|string',
-    ]);
+    public function uploadChecklistFile(Request $request, $id)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp,pdf,xls,xlsx|max:10240',
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'address' => 'nullable|string',
+        ]);
 
-    $checklist = TaskChecklist::findOrFail($id);
+        $checklist = TaskChecklist::findOrFail($id);
 
-    if ($checklist->file_path) {
-        \Storage::disk('public')->delete($checklist->file_path);
+        if ($checklist->file_path) {
+            \Storage::disk('public')->delete($checklist->file_path);
+        }
+
+        $file = $request->file('file');
+        $path = $file->store('checklist-files', 'public');
+
+        $checklist->update([
+            'file_path' => $path,
+            'file_name' => $file->getClientOriginalName(),
+            'file_type' => $file->getMimeType(),
+            'is_done' => true,
+            'uncheck_reason' => null,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'address' => $request->address,
+        ]);
+
+        $this->syncAssignmentStatus($checklist->task_assignment_id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'File berhasil diupload dan checklist ditandai selesai.',
+        ]);
     }
 
-    $file = $request->file('file');
-    $path = $file->store('checklist-files', 'public');
+    public function deleteChecklistFile($id)
+    {
+        $checklist = TaskChecklist::findOrFail($id);
 
-    $checklist->update([
-        'file_path'      => $path,
-        'file_name'      => $file->getClientOriginalName(),
-        'file_type'      => $file->getMimeType(),
-        'is_done'        => true,
-        'uncheck_reason' => null,
-        'latitude'       => $request->latitude,
-        'longitude'      => $request->longitude,
-        'address'        => $request->address,
-    ]);
+        if ($checklist->file_path) {
+            \Storage::disk('public')->delete($checklist->file_path);
+        }
 
-    $this->syncAssignmentStatus($checklist->task_assignment_id);
+        $checklist->update([
+            'file_path' => null,
+            'file_name' => null,
+            'file_type' => null,
+            'is_done' => false,
+            'latitude' => null,
+            'longitude' => null,
+            'address' => null,
+        ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'File berhasil diupload dan checklist ditandai selesai.',
-    ]);
-}
+        $this->syncAssignmentStatus($checklist->task_assignment_id);
 
-public function deleteChecklistFile($id)
-{
-    $checklist = TaskChecklist::findOrFail($id);
-
-    if ($checklist->file_path) {
-        \Storage::disk('public')->delete($checklist->file_path);
+        return response()->json(['success' => true, 'message' => 'File berhasil dihapus.']);
     }
-
-    $checklist->update([
-        'file_path'  => null,
-        'file_name'  => null,
-        'file_type'  => null,
-        'is_done'    => false,
-        'latitude'   => null,
-        'longitude'  => null,
-        'address'    => null,
-    ]);
-
-    $this->syncAssignmentStatus($checklist->task_assignment_id);
-
-    return response()->json(['success' => true, 'message' => 'File berhasil dihapus.']);
-}
-    public function managerUncheck(Request $request, $id)
+    public function divheadUncheck(Request $request, $id)
     {
         $request->validate([
             'reason' => 'required|string|max:1000',

@@ -78,11 +78,11 @@
                     class="tab-button px-4 py-2 rounded-2xl bg-indigo-600 text-white font-semibold shadow-sm">
                     Overview
                 </button>
-                <button type="button" onclick="switchTab('supervisor')" id="tab-button-supervisor"
+                <button type="button" onclick="switchTab('depthead')" id="tab-button-depthead"
                     class="tab-button px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">
                     Team
                 </button>
-                @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                     <button type="button" onclick="switchTab('addtask')" id="tab-button-addtask"
                         class="tab-button px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">
                         Add Member
@@ -190,7 +190,7 @@
                                 <h3 class="text-lg font-bold text-slate-800">{{ $allDrafts->count() }} Drafts</h3>
                             </div>
                         </div>
-                        @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                        @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                             <button type="button" onclick="showTaskAssignForm()"
                                 class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-all duration-200 shadow-lg shadow-indigo-100 hover:scale-[1.02]">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
@@ -300,7 +300,7 @@
                                         {{-- Actions --}}
                                         <td class="px-8 py-6 text-right">
                                             <div class="flex items-center justify-end gap-2" onclick="event.stopPropagation()">
-                                                @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                                                     <div class="relative group">
                                                         <button type="button"
                                                             onclick="event.stopPropagation(); openEditDataModal('draft', { id: {{ $draft->id }}, userId: @js($draft->user_id ?? ''), description: @js($draft->description ?? ''), deadline: @js($draft->deadline ? \Carbon\Carbon::parse($draft->deadline)->format('Y-m-d') : ''), notes: @js($draft->notes ?? '') })"
@@ -409,7 +409,7 @@
                                                                         @if(!$checklist->assignment || !$checklist->assignment->user_id)
                                                                             @if(!$checklist->assigned_user_id)
                                                                                 <div class="relative group">
-                                                                                    @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                                                    @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                                                                                         <button type="button"
                                                                                             onclick="openAssignChecklistModal({{ $checklist->id }}, '{{ addslashes($checklist->title) }}', '{{ $draft->deadline ?? '' }}', '{{ addslashes($draft->description ?? '') }}', '{{ addslashes($draft->notes ?? '') }}')"
                                                                                             class="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white transition">
@@ -463,7 +463,7 @@
 
                                                                         {{-- Delete --}}
                                                                         <div class="relative group">
-                                                                            @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                                            @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                                                                                 <button type="button"
                                                                                     onclick="event.stopPropagation(); openEditDataModal('checklist', { id: {{ $checklist->id }}, title: @js($checklist->title) })"
                                                                                     class="flex h-10 w-10 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition">
@@ -480,7 +480,7 @@
                                                                         </div>
 
                                                                         <div class="relative group">
-                                                                            @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                                            @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                                                                                 <button type="button"
                                                                                     onclick="deleteChecklist({{ $checklist->id }})"
                                                                                     class="flex h-10 w-10 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition">
@@ -521,14 +521,14 @@
                 @endif
             </div>
 
-            {{-- STAFF - SUPERVISOR PANEL --}}
+            {{-- STAFF - DEPT HEAD PANEL --}}
             <!-- <div class="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm mt-6">
 
                 {{-- Header --}}
                 <div class="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
                     <div>
-                        <h3 class="font-black text-slate-800 text-xl">Daftar Staff & Supervisor</h3>
-                        <p class="text-sm text-slate-400 mt-1">Seluruh anggota task beserta supervisor masing-masing</p>
+                        <h3 class="font-black text-slate-800 text-xl">Daftar Staff & Dept Head</h3>
+                        <p class="text-sm text-slate-400 mt-1">Seluruh anggota task beserta Dept Head masing-masing</p>
                     </div>
                     <span
                         class="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-2xl text-sm font-semibold">
@@ -544,7 +544,7 @@
                                     <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                         Staff</th>
                                     <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                        Supervisor</th>
+                                        Dept Head</th>
                                     <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                         Status SPV</th>
                                 </tr>
@@ -899,7 +899,7 @@
                                 <td class="p-6">
 
                                     <div class="flex flex-wrap gap-3">
-                                        @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                        @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                                             <button
                                                 onclick="event.stopPropagation(); showAssignForm({{ $user->id }}, '{{ addslashes($user->name) }}')"
                                                 class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-2xl font-semibold transition">
@@ -939,7 +939,7 @@
                                                         <th class="w-[12%] px-5 py-4 text-left font-bold">
                                                             Status
                                                         </th>
-                                                        @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                        @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                                                             <th class="w-[14%] px-5 py-4 text-center font-bold">
                                                                 Action
                                                             </th>
@@ -994,7 +994,7 @@
                                                                                     <div
                                                                                         class="mt-3 rounded-2xl bg-red-50 border border-red-100 px-3 py-2">
                                                                                         <p class="text-[11px] font-semibold text-red-600">
-                                                                                            Dibatalkan manager
+                                                                                            Dibatalkan Div Head / Admin
                                                                                         </p>
 
                                                                                         <p class="text-[11px] text-red-500 mt-1 leading-relaxed">
@@ -1097,7 +1097,7 @@
 
                                                                     {{-- Action --}}
                                                                     {{-- Action --}}
-                                                                    @unless(in_array(auth()->user()->role, ['direksi', 'manager']))
+                                                                    @unless(in_array(auth()->user()->role, ['direksi', 'gh', 'div_head']))
                                                                         <td class="px-5 py-5">
 
                                                                             <div class="flex items-center justify-center gap-2">
@@ -1308,16 +1308,16 @@
             </div>
         </div>
 
-<div id="tab-supervisor" class="tab-content hidden mt-6">
+<div id="tab-depthead" class="tab-content hidden mt-6">
 
-    {{-- STAFF - SUPERVISOR PANEL --}}
+    {{-- STAFF - DEPT HEAD PANEL --}}
     <div class="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-sm">
 
         {{-- Header --}}
         <div class="px-8 py-6 border-b border-slate-100 flex items-center justify-between">
             <div>
-                <h3 class="font-black text-slate-800 text-xl">Daftar Staff & Supervisor</h3>
-                <p class="text-sm text-slate-400 mt-1">Seluruh anggota task beserta supervisor masing-masing</p>
+                <h3 class="font-black text-slate-800 text-xl">Daftar Staff & Dept Head</h3>
+                <p class="text-sm text-slate-400 mt-1">Seluruh anggota task beserta Dept Head masing-masing</p>
             </div>
             <span class="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-2xl text-sm font-semibold">
                 {{ $task->users->count() }} Staff
@@ -1330,7 +1330,7 @@
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-100">
                             <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Staff</th>
-                            <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Supervisor</th>
+                            <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Dept Head</th>
                             <th class="px-8 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status SPV</th>
                         </tr>
                     </thead>
@@ -1857,7 +1857,7 @@
             function switchTab(tab) {
                 sessionStorage.setItem(tabStorageKey, tab);
 
-                ['overview', 'addtask', 'assignments', 'supervisor'].forEach(key => {
+                ['overview', 'addtask', 'assignments', 'depthead'].forEach(key => {
                     const s = document.getElementById('tab-' + key);
                     const b = document.getElementById('tab-button-' + key);
                     if (s) s.classList.toggle('hidden', key !== tab);
@@ -1880,7 +1880,7 @@
             /* ─── Pagination ─────────────────────────────────────────── */
             window.addEventListener('DOMContentLoaded', () => {
                 const savedTab = sessionStorage.getItem(tabStorageKey);
-                const initialTab = ['overview', 'addtask', 'assignments', 'supervisor'].includes(savedTab)
+                const initialTab = ['overview', 'addtask', 'assignments', 'depthead'].includes(savedTab)
                     ? savedTab
                     : 'overview';
 
@@ -2557,7 +2557,7 @@
                 }
                 document.getElementById('uncheckReasonError').classList.add('hidden');
                 try {
-                    const response = await fetch(`/project/checklist/${checklistId}/manager-uncheck`, {
+                    const response = await fetch(`/project/checklist/${checklistId}/divhead-uncheck`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
                         body: JSON.stringify({ reason })

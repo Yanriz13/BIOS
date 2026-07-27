@@ -13,13 +13,25 @@
         <span class="tm-badge-divisi">{{ $divisi }}</span>
     </div>
 
-    {{-- Supervisor Section --}}
+    {{-- Success/Error Alerts --}}
+    @if(session('success'))
+        <div style="background-color: #dcfce7; color: #15803d; padding: 12px 16px; border-radius: 8px; margin-bottom: 1.5rem; font-size: 14px; border: 1px solid #bbf7d0;">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div style="background-color: #fee2e2; color: #b91c1c; padding: 12px 16px; border-radius: 8px; margin-bottom: 1.5rem; font-size: 14px; border: 1px solid #fecaca;">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    {{-- Dept Head Section --}}
     <div class="tm-section">
         <div class="tm-section-header">
             <svg class="tm-section-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            <span class="tm-section-label">Supervisor</span>
+            <span class="tm-section-label">Dept Head</span>
             <span class="tm-section-count">{{ $supervisors->count() }}</span>
         </div>
 
@@ -30,6 +42,7 @@
                         <th class="col-no">#</th>
                         <th>Nama</th>
                         <th>Email</th>
+                        <th>Departemen</th>
                         <th class="col-action">Aksi</th>
                     </tr>
                 </thead>
@@ -44,11 +57,12 @@
                                 </div>
                             </td>
                             <td class="td-email">{{ $s->email }}</td>
+                            <td>{{ $s->departemen ?? '-' }}</td>
                             <td>
                                 <button
                                     type="button"
                                     class="tm-btn-assign"
-                                    onclick="openAssignModal({{ $s->id }}, '{{ addslashes($s->name) }}')"
+                                    onclick="openAssignModal({{ $s->id }}, '{{ addslashes($s->name) }}', {{ $s->departemen_id ?? 'null' }}, {{ $s->divisi_id ?? 'null' }})"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
                                     Assign staff
@@ -79,7 +93,8 @@
                         <th class="col-no">#</th>
                         <th>Nama</th>
                         <th>Email</th>
-                        <th>Supervisor saat ini</th>
+                        <th>Departemen</th>
+                        <th>Dept Head saat ini</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -93,6 +108,7 @@
                                 </div>
                             </td>
                             <td class="td-email">{{ $u->email }}</td>
+                            <td>{{ $u->departemen ?? '-' }}</td>
                             <td>
                                 @if(optional($u->supervisor)->name)
                                     <span class="tm-sup-badge">
@@ -117,7 +133,7 @@
     <div class="tm-modal" onclick="event.stopPropagation()">
         <div class="tm-modal-header">
             <div>
-                <p class="tm-modal-sub">Assign staff ke supervisor</p>
+                <p class="tm-modal-sub">Assign staff ke Dept Head</p>
                 <p class="tm-modal-title" id="modalSupervisorName"></p>
             </div>
             <button type="button" class="tm-modal-close" onclick="closeAssignModal()" aria-label="Tutup">
@@ -126,7 +142,7 @@
         </div>
 
         <div class="tm-modal-body">
-            <form id="assignMultipleForm" action="{{ route('manager.management.team.assign-multiple') }}" method="POST">
+            <form id="assignMultipleForm" action="{{ route('divhead.management.team.assign-multiple') }}" method="POST">
                 @csrf
                 <input type="hidden" name="supervisor_id" id="modalSupervisorId" value="">
 
@@ -138,6 +154,8 @@
                             class="staff-checkbox tm-checkbox"
                             data-current-supervisor="{{ $u->supervisor_id ?? '' }}"
                             data-current-supervisor-name="{{ optional($u->supervisor)->name ?? '' }}"
+                            data-staff-dept-id="{{ $u->departemen_id ?? '' }}"
+                            data-staff-divisi-id="{{ $u->divisi_id ?? '' }}"
                             name="staff_ids[]"
                             value="{{ $u->id }}"
                         >
@@ -406,7 +424,7 @@
 </style>
 
 <script>
-function openAssignModal(supervisorId, supervisorName) {
+function openAssignModal(supervisorId, supervisorName, supervisorDeptId, supervisorDivisiId) {
     document.getElementById('assignModalBackdrop').classList.add('active');
     document.getElementById('modalSupervisorName').innerText = supervisorName;
     document.getElementById('modalSupervisorId').value = supervisorId;
@@ -416,11 +434,26 @@ function openAssignModal(supervisorId, supervisorName) {
         const otherSpvName = cb.dataset.currentSupervisorName;
         const hasOtherSpv  = cb.dataset.currentSupervisor !== ''
                              && cb.dataset.currentSupervisor != supervisorId;
+        const staffDeptId  = cb.dataset.staffDeptId;
+        const staffDivisiId  = cb.dataset.staffDivisiId;
+
+        // Check if supervisor and staff are in the same department and division
+        const isSameDept = (supervisorDeptId === null || supervisorDeptId === 'null' || staffDeptId === '' || supervisorDeptId == staffDeptId);
+        const isSameDiv  = (supervisorDivisiId === null || supervisorDivisiId === 'null' || staffDivisiId === '' || supervisorDivisiId == staffDivisiId);
+        const isMatch = isSameDept && isSameDiv;
 
         cb.checked = isCurrentSpv;
 
         const badge = cb.closest('label').querySelector('.tm-other-spv-badge');
-        if (hasOtherSpv && otherSpvName) {
+        if (!isMatch) {
+            // disable + visual dimmed for mismatched departments
+            cb.disabled = true;
+            cb.closest('label').style.opacity = '0.35';
+            cb.closest('label').style.cursor  = 'not-allowed';
+            cb.closest('label').style.pointerEvents = 'none';
+            badge.textContent = '❌ Beda Divisi/Dept';
+            badge.style.display = '';
+        } else if (hasOtherSpv && otherSpvName) {
             // disable + visual dimmed
             cb.disabled = true;
             cb.closest('label').style.opacity = '0.55';

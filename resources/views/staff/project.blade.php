@@ -310,7 +310,7 @@
 
                                                                         <div>
                                                                             <p class="text-xs font-semibold text-red-600">
-                                                                                Alasan manager:
+                                                                                Alasan Div Head / Admin:
                                                                             </p>
 
                                                                             <p class="text-xs text-red-500 mt-0.5 leading-relaxed">
@@ -731,7 +731,7 @@
                         </svg>
                     </div>
                     <p class="text-lg font-semibold text-slate-800">Tidak ada checklist untuk saat ini</p>
-                    <p class="mt-3 text-sm text-slate-500">Manager belum mengirimkan assignment checklist ke akun kamu.</p>
+                    <p class="mt-3 text-sm text-slate-500">Div Head / Admin belum mengirimkan assignment checklist ke akun kamu.</p>
                 </div>
             @endif
 
@@ -772,7 +772,7 @@
                                 <div class="flex items-start gap-2">
                                     <span class="text-red-400 text-lg shrink-0 mt-0.5">⚠️</span>
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-xs font-semibold text-red-600 mb-1">Alasan Penolakan Manager:</p>
+                                        <p class="text-xs font-semibold text-red-600 mb-1">Alasan Penolakan Div Head / Admin:</p>
                                         <p id="uploadReasonText" class="text-xs text-red-600 leading-relaxed break-words">—</p>
                                     </div>
                                 </div>

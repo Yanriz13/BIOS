@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Divisi extends Model
+class Departemen extends Model
 {
     use HasFactory;
 
-    protected $table = 'divisis';
+    protected $table = 'departemens';
 
     protected $fillable = [
+        'divisi_id',
         'nama',
         'kode',
         'deskripsi',
@@ -23,23 +24,23 @@ class Divisi extends Model
     ];
 
     /**
-     * Relasi ke users
+     * Relasi ke Divisi
+     */
+    public function divisi()
+    {
+        return $this->belongsTo(Divisi::class, 'divisi_id');
+    }
+
+    /**
+     * Relasi ke Users
      */
     public function users()
     {
-        return $this->hasMany(User::class, 'divisi_id');
+        return $this->hasMany(User::class, 'departemen_id');
     }
 
     /**
-     * Relasi ke departemens
-     */
-    public function departemens()
-    {
-        return $this->hasMany(Departemen::class, 'divisi_id');
-    }
-
-    /**
-     * Scope hanya divisi aktif
+     * Scope hanya departemen aktif
      */
     public function scopeActive($query)
     {

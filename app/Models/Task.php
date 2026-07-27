@@ -14,6 +14,7 @@ class Task extends Model
         'priority',
         'status',
         'divisi',
+        'departemen_id'
 
     ];
 

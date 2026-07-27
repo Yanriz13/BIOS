@@ -18,7 +18,9 @@ class User extends Authenticatable
         'password',
         'role',
         'divisi',
-          'divisi_id',
+        'divisi_id',
+        'departemen',
+        'departemen_id',
         'supervisor_id',
     ];
 
@@ -37,6 +39,11 @@ class User extends Authenticatable
     public function tasks()
     {
         return $this->belongsToMany(Task::class);
+    }
+
+    public function assignments()
+    {
+        return $this->hasMany(TaskAssignment::class);
     }
 
     public function supervisor()
@@ -66,5 +73,19 @@ class User extends Authenticatable
     public function divisiRelasi()
     {
         return $this->belongsTo(Divisi::class, 'divisi_id');
+    }
+    public function departemenRelasi()
+    {
+        return $this->belongsTo(Departemen::class, 'departemen_id');
+    }
+
+    public function isGlobalScope()
+    {
+        return in_array($this->role, ['super_admin', 'direksi', 'gh', 'div_head']);
+    }
+
+    public function isDepartmentScope()
+    {
+        return in_array($this->role, ['dept_head', 'admin_dept', 'staff']);
     }
 }

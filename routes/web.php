@@ -8,8 +8,24 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DailyRoutineController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SuperAdmin\DivisiController;
+use App\Http\Controllers\SuperAdmin\DepartemenController;
 
 Route::get('/', function () {
+    if (Auth::check()) {
+        $user = Auth::user();
+        if ($user->role == 'super_admin') {
+            return redirect()->route('superadmin.users.index');
+        }
+        if (in_array($user->role, ['direksi', 'gh', 'div_head', 'admin_dept'])) {
+            return redirect()->route('divhead.dashboard');
+        }
+        if (in_array($user->role, ['dept_head'])) {
+            return redirect()->route('depthead.project.index');
+        }
+        if ($user->role == 'staff') {
+            return redirect()->route('staff.project.index');
+        }
+    }
     return redirect()->route('login');
 });
 
@@ -29,26 +45,26 @@ Route::middleware(['auth', 'role:super_admin'])
     });
 
 // =============================
-// DIREKSI, MANAGER (READ-ONLY) & ADMIN DIVISI
+// DIREKSI, GH, DIV HEAD & ADMIN DEPT
 // =============================
-Route::middleware(['auth', 'role:admin_divisi,manager,direksi'])
+Route::middleware(['auth', 'role:admin_dept,div_head,direksi,gh'])
     ->group(function () {
 
-        Route::get('/manager/dashboard', [HomeController::class, 'index'])
-            ->name('manager.dashboard');
+        Route::get('/divhead/dashboard', [HomeController::class, 'index'])
+            ->name('divhead.dashboard');
 
-        Route::get('/manager/management-tim', [HomeController::class, 'managementTeam'])
-            ->name('manager.management.team');
+        Route::get('/divhead/management-tim', [HomeController::class, 'managementTeam'])
+            ->name('divhead.management.team');
 
     });
 
-Route::middleware(['auth', 'role:admin_divisi'])
+Route::middleware(['auth', 'role:admin_dept,div_head'])
     ->group(function () {
-        Route::post('/manager/management-tim/assign', [HomeController::class, 'assignSupervisor'])
-            ->name('manager.management.team.assign');
+        Route::post('/divhead/management-tim/assign', [HomeController::class, 'assignSupervisor'])
+            ->name('divhead.management.team.assign');
 
-        Route::post('/manager/management-tim/assign-multiple', [HomeController::class, 'assignMultipleToSupervisor'])
-            ->name('manager.management.team.assign-multiple');
+        Route::post('/divhead/management-tim/assign-multiple', [HomeController::class, 'assignMultipleToSupervisor'])
+            ->name('divhead.management.team.assign-multiple');
     });
 
 
@@ -65,22 +81,22 @@ Route::middleware(['auth', 'role:staff'])
 
 
 // =============================
-// SUPERVISOR
+// DEPT HEAD
 // =============================
-Route::middleware(['auth', 'role:supervisor'])
+Route::middleware(['auth', 'role:dept_head'])
     ->group(function () {
 
-        Route::get('/supervisor/dashboard', [HomeController::class, 'index'])
-            ->name('supervisor.dashboard');
+        Route::get('/depthead/dashboard', [HomeController::class, 'index'])
+            ->name('depthead.dashboard');
 
-        Route::get('/supervisor/project', [ProjectController::class, 'supervisorProject'])
-            ->name('supervisor.project.index');
+        Route::get('/depthead/project', [ProjectController::class, 'deptheadProject'])
+            ->name('depthead.project.index');
 
     });
 
 
 // =============================
-// SUPER ADMIN USER MANAGEMENT
+// SUPER ADMIN USER & DIVISI & DEPARTEMEN MANAGEMENT
 // =============================
 Route::middleware(['auth', 'role:super_admin'])
     ->prefix('super-admin')
@@ -88,14 +104,16 @@ Route::middleware(['auth', 'role:super_admin'])
     ->group(function () {
 
         Route::resource('users', UserManagementController::class);
-    Route::resource('divisi', DivisiController::class);
+        Route::resource('divisi', DivisiController::class);
+        Route::resource('departemen', DepartemenController::class);
+        Route::get('/divisi/{divisiId}/departemens', [DepartemenController::class, 'getByDivisi'])->name('departemen.by-divisi');
     });
 
 
 // ======================================================
-// PROJECT VIEW (ADMIN DIVISI + MANAGER + DIREKSI)
+// PROJECT VIEW (ADMIN DEPT + DIV HEAD + DIREKSI + GH)
 // ======================================================
-Route::middleware(['auth', 'role:admin_divisi,manager,direksi'])
+Route::middleware(['auth', 'role:admin_dept,div_head,direksi,gh'])
     ->group(function () {
 
         Route::get('/project', [ProjectController::class, 'index'])
@@ -108,9 +126,9 @@ Route::middleware(['auth', 'role:admin_divisi,manager,direksi'])
 
 
 // ======================================================
-// PROJECT ACTION (ADMIN DIVISI ONLY)
+// PROJECT ACTION (ADMIN DEPT & DIV HEAD ONLY)
 // ======================================================
-Route::middleware(['auth', 'role:admin_divisi'])
+Route::middleware(['auth', 'role:admin_dept,div_head'])
     ->group(function () {
 
         Route::post('/project/store', [ProjectController::class, 'store'])
@@ -155,8 +173,8 @@ Route::middleware(['auth', 'role:admin_divisi'])
         Route::patch('/project/checklist/{id}/unassign', [ProjectController::class, 'unassignChecklist'])
             ->name('project.checklist.unassign');
 
-        Route::patch('/project/checklist/{id}/manager-uncheck', [ProjectController::class, 'managerUncheck'])
-            ->name('project.checklist.manager-uncheck');
+        Route::patch('/project/checklist/{id}/divhead-uncheck', [ProjectController::class, 'divheadUncheck'])
+            ->name('project.checklist.divhead-uncheck');
 
     });
 
@@ -164,7 +182,7 @@ Route::middleware(['auth', 'role:admin_divisi'])
 // ======================================================
 // STAFF PROJECT
 // ======================================================
-Route::middleware(['auth', 'role:staff,supervisor'])
+Route::middleware(['auth', 'role:staff,dept_head'])
     ->group(function () {
 
         Route::get('/staff/project', [ProjectController::class, 'staffProject'])
@@ -210,7 +228,7 @@ Route::middleware(['auth'])->group(function () {
 // ======================================================
 Route::prefix('project/daily-routine')
     ->name('daily-routine.')
-    ->middleware(['auth', 'role:admin_divisi,manager,direksi,supervisor,staff'])
+    ->middleware(['auth', 'role:admin_dept,div_head,direksi,gh,dept_head,staff'])
     ->group(function () {
 
         Route::get('/', [DailyRoutineController::class, 'index'])
@@ -223,11 +241,11 @@ Route::prefix('project/daily-routine')
 
 
 // ======================================================
-// DAILY ROUTINE ACTION (ADMIN DIVISI & SUPERVISOR)
+// DAILY ROUTINE ACTION (ADMIN DEPT & DEPT HEAD)
 // ======================================================
 Route::prefix('project/daily-routine')
     ->name('daily-routine.')
-    ->middleware(['auth', 'role:admin_divisi,supervisor'])
+    ->middleware(['auth', 'role:admin_dept,dept_head,div_head'])
     ->group(function () {
 
         Route::post('/', [DailyRoutineController::class, 'store'])
@@ -248,18 +266,18 @@ Route::prefix('project/daily-routine')
         Route::delete('checklist/{checklistId}', [DailyRoutineController::class, 'checklistDestroy'])
             ->name('checklist.destroy');
 
-        Route::patch('checklist/{checklistId}/manager-uncheck', [DailyRoutineController::class, 'checklistManagerUncheck'])
-            ->name('checklist.manager-uncheck');
+        Route::patch('checklist/{checklistId}/divhead-uncheck', [DailyRoutineController::class, 'checklistDivheadUncheck'])
+            ->name('checklist.divhead-uncheck');
 
     });
 
 
 // ======================================================
-// DAILY ROUTINE STAFF
+// DAILY ROUTINE STAFF & DEPT HEAD
 // ======================================================
 Route::prefix('project/daily-routine')
     ->name('daily-routine.')
-    ->middleware(['auth', 'role:staff,supervisor'])
+    ->middleware(['auth', 'role:staff,dept_head'])
     ->group(function () {
 
         Route::patch('checklist/{checklistId}/toggle', [DailyRoutineController::class, 'checklistToggle'])

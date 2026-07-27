@@ -14,7 +14,7 @@
             <div class="flex items-center justify-between gap-3">
                 <div class="min-w-0 flex-1">
                     <p class="text-[10px] md:text-sm uppercase tracking-[0.25em] text-violet-600 font-semibold">
-                        Supervisor · Daily Routine
+                        Dept Head · Daily Routine
                     </p>
                     <h1 class="mt-2 md:mt-4 text-lg sm:text-xl md:text-3xl font-black text-slate-900 leading-tight">
                         Rutinitas Harian Tim
@@ -481,7 +481,7 @@
         <div class="text-center py-20 text-slate-400">
             <div class="text-5xl mb-4">👥</div>
             <p class="text-lg font-bold text-slate-600">Belum ada staff diassign ke Anda</p>
-            <p class="text-sm text-slate-400 mt-1">Hubungi manager untuk assign staff ke Anda.</p>
+            <p class="text-sm text-slate-400 mt-1">Hubungi Div Head untuk assign staff ke Anda.</p>
         </div>
     @endforelse
 
@@ -721,7 +721,7 @@ async function submitDrUncheck() {
     const clId   = document.getElementById('drUncheckId').value;
     const reason = document.getElementById('drUncheckReason').value.trim();
     if (!reason) { document.getElementById('drUncheckError').classList.remove('hidden'); return; }
-    const resp = await fetch(`/project/daily-routine/checklist/${clId}/manager-uncheck`, {
+    const resp = await fetch(`/project/daily-routine/checklist/${clId}/divhead-uncheck`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
         body: JSON.stringify({ reason }),

@@ -19,14 +19,28 @@
     {{-- ========================= --}}
     {{-- USER PROFILE --}}
     {{-- ========================= --}}
+    @php
+        $roleMap = [
+            'super_admin' => 'Super Admin',
+            'direksi'     => 'Direksi',
+            'gh'          => 'GH',
+            'div_head'    => 'Div Head',
+            'dept_head'   => 'Dept Head',
+            'admin_dept'  => 'Admin Dept',
+            'staff'       => 'Staff',
+        ];
+        $displayRole = $roleMap[auth()->user()->role] ?? ucfirst(str_replace('_', ' ', auth()->user()->role));
+    @endphp
     <div class="px-4 mt-6">
         <div class="bg-white/10 rounded-3xl p-4 border border-white/10">
             <div class="flex items-center gap-4">
-                <img src="https://i.pravatar.cc/100" class="w-14 h-14 rounded-2xl object-cover">
+                <div class="w-14 h-14 rounded-2xl bg-amber-400/20 text-amber-300 font-black text-xl flex items-center justify-center border border-amber-400/30 shadow-inner">
+                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+                </div>
                 <div>
                     <h3 class="font-bold text-lg">{{ auth()->user()->name }}</h3>
-                    <p class="text-slate-300 text-sm capitalize">{{ auth()->user()->role }}</p>
-                    <p class="text-slate-400 text-xs">{{ auth()->user()->divisi }}</p>
+                    <p class="text-slate-300 text-sm font-semibold">{{ $displayRole }}</p>
+                    <p class="text-slate-400 text-xs">{{ auth()->user()->departemen ?? auth()->user()->divisi ?? '-' }}</p>
                 </div>
             </div>
         </div>
@@ -58,25 +72,37 @@
                     </div>
                 </a>
 
+                <a href="{{ route('superadmin.departemen.index') }}"
+                    class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
+                                                                                   {{ request()->routeIs('superadmin.departemen.*') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
+                    <div
+                        class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('superadmin.departemen.*') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
+                        <x-icon name="note" class="size-6" /></div>
+                    <div>
+                        <p class="font-bold">Departemen</p>
+                        <small class="opacity-70">Manage departemens</small>
+                    </div>
+                </a>
+
             @endif
 
 
             {{-- ====================================================== --}}
-            {{-- DIREKSI, MANAGER & ADMIN DIVISI --}}
+            {{-- DIREKSI, GH, DIV HEAD & ADMIN DEPT --}}
             {{-- ====================================================== --}}
-            @if(in_array(auth()->user()->role, ['admin_divisi', 'manager', 'direksi']))
+            @if(in_array(auth()->user()->role, ['admin_dept', 'div_head', 'direksi', 'gh']))
 
 
                 {{-- DASHBOARD --}}
-                <a href="{{ route('manager.dashboard') }}"
+                <a href="{{ route('divhead.dashboard') }}"
                     class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
-                                                                                   {{ request()->routeIs('manager.dashboard') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
+                                                                                   {{ request()->routeIs('divhead.dashboard') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
                     <div
-                        class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('manager.dashboard') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
+                        class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('divhead.dashboard') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
                         <x-icon name="home" class="size-6" /></div>
                     <div>
                         <p class="font-bold">Dashboard</p>
-                        <small class="opacity-70">Division overview</small>
+                        <small class="opacity-70">Overview System</small>
                     </div>
                 </a>
 
@@ -93,7 +119,7 @@
                     </div>
                 </a>
 
-                {{-- ✅ DAILY ROUTINE — MANAGER --}}
+                {{-- DAILY ROUTINE --}}
                 <a href="{{ route('daily-routine.index') }}"
                     class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
                                                                                    {{ request()->routeIs('daily-routine.index*') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
@@ -115,20 +141,20 @@
                     </div>
                     <div>
                         <p class="font-bold">History Routine</p>
-                        <small class="opacity-70">Riwayat Rutinitas </small>
+                        <small class="opacity-70">Riwayat Rutinitas</small>
                     </div>
                 </a>
 
-                {{-- MANAGEMENT TIM (MANAGER) --}}
-                <a href="{{ route('manager.management.team') }}"
+                {{-- MANAGEMENT TIM --}}
+                <a href="{{ route('divhead.management.team') }}"
                     class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
-                                                                                   {{ request()->routeIs('manager.management.team') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
+                                                                                   {{ request()->routeIs('divhead.management.team') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
                     <div
-                        class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('manager.management.team') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
+                        class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('divhead.management.team') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
                         <x-icon name="users" class="size-6" /></div>
                     <div>
                         <p class="font-bold">Management Tim</p>
-                        <small class="opacity-70">Kelola Supervisor & Tim</small>
+                        <small class="opacity-70">Kelola Dept Head & Tim</small>
                     </div>
                 </a>
             @endif
@@ -151,7 +177,7 @@
                     </div>
                 </a>
 
-                {{-- ✅ DAILY ROUTINE — STAFF --}}
+                {{-- DAILY ROUTINE — STAFF --}}
                 <a href="{{ route('daily-routine.index') }}"
                     class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
                                                                                    {{ request()->routeIs('daily-routine.index*') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
@@ -162,60 +188,41 @@
                         <p class="font-bold">Daily Routine</p>
                         <small class="opacity-70">Rutinitas harianku</small>
                     </div>
-                    <a href="{{ route('daily-routine.history') }}"
-                        class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
+                </a>
+
+                <a href="{{ route('daily-routine.history') }}"
+                    class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
                                                                                    {{ request()->routeIs('daily-routine.history*') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
-                        <div
-                            class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('daily-routine.history*') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
-                            <x-icon name="history" class="size-6" />
-                        </div>
-                        <div>
-                            <p class="font-bold">History Routine</p>
-                            <small class="opacity-70">Riwayat Rutinitas </small>
-                        </div>
-                    </a>
-                    <!-- <a href="{{ route('daily-routine.history') }}"
-                                                                    class="flex items-center gap-3 px-4 py-3 rounded-2xl hover:bg-slate-100">
-
-                                                                    <i class="ti ti-history text-lg"></i>
-
-                                                                    <span>History Routine</span>
-
-                                                                </a> -->
+                    <div
+                        class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('daily-routine.history*') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
+                        <x-icon name="history" class="size-6" />
+                    </div>
+                    <div>
+                        <p class="font-bold">History Routine</p>
+                        <small class="opacity-70">Riwayat Rutinitas</small>
+                    </div>
+                </a>
             @endif
 
             {{-- ====================================================== --}}
-            {{-- SUPERVISOR --}}
+            {{-- DEPT HEAD / SUPERVISOR --}}
             {{-- ====================================================== --}}
-            @if(auth()->user()->role == 'supervisor')
-
-                {{-- DASHBOARD (supervisor) --}}
-                <!-- <a href="{{ route('supervisor.dashboard') }}"
-                    class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
-                                                                                   {{ request()->routeIs('supervisor.dashboard') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
-                    <div
-                        class="w-11 h-11 rounded-xl flex items-center justify-center {{ request()->routeIs('supervisor.dashboard') ? 'bg-indigo-100' : 'bg-white/10' }}">
-                        🧭</div>
-                    <div>
-                        <p class="font-bold">Supervisor Dashboard</p>
-                        <small class="opacity-70">Overview divisi Anda</small>
-                    </div>
-                </a> -->
+            @if(in_array(auth()->user()->role, ['dept_head']))
 
                 {{-- MY PROJECT --}}
-                <a href="{{ route('supervisor.project.index') }}"
+                <a href="{{ route('depthead.project.index') }}"
                     class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
-                                                                                   {{ request()->routeIs('supervisor.project.*') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
+                                                                                   {{ request()->routeIs('depthead.project.*') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
                     <div
-                        class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('supervisor.project.*') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
+                        class="w-11 h-11 rounded-xl border flex items-center justify-center {{ request()->routeIs('depthead.project.*') ? 'border-slate-300 bg-white' : 'border-white/35 bg-transparent' }}">
                         <x-icon name="note" class="size-6" /></div>
                     <div>
                         <p class="font-bold">My Project</p>
-                        <small class="opacity-70">Task list divisi</small>
+                        <small class="opacity-70">Task list departemen</small>
                     </div>
                 </a>
 
-                {{-- ✅ DAILY ROUTINE — SUPERVISOR --}}
+                {{-- DAILY ROUTINE --}}
                 <a href="{{ route('daily-routine.index') }}"
                     class="group flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300
                                                                                    {{ request()->routeIs('daily-routine.index*') ? 'bg-white text-slate-800 shadow-xl' : 'hover:bg-white/10' }}">
@@ -224,7 +231,7 @@
                         <x-icon name="daily_routine" class="size-6" /></div>
                     <div>
                         <p class="font-bold">Daily Routine</p>
-                        <small class="opacity-70">Rutinitas divisi</small>
+                        <small class="opacity-70">Rutinitas departemen</small>
                     </div>
                 </a>
 

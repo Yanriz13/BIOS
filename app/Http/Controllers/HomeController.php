@@ -21,15 +21,27 @@ class HomeController extends Controller
         $checklistQuery  = TaskChecklist::query();
         $employeeQuery   = User::where('role', 'staff');
 
-        if (in_array($user->role, ['admin_divisi', 'supervisor'])) {
-            $taskQuery->where('divisi', $user->divisi);
-            $assignmentQuery->whereHas('task', fn($q) => $q->where('divisi', $user->divisi));
-            $checklistQuery->whereHas('assignment.task', fn($q) => $q->where('divisi', $user->divisi));
-            $employeeQuery->where('divisi', $user->divisi);
-            $scopeTitle = 'Divisi ' . $user->divisi;
+        if (in_array($user->role, ['admin_dept', 'dept_head'])) {
+            if ($user->departemen_id && $user->divisi_id) {
+                $taskQuery->whereHas('assignments.user', fn($q) => $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id));
+                $assignmentQuery->whereHas('user', fn($q) => $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id));
+                $checklistQuery->whereHas('assignment.user', fn($q) => $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id));
+                $employeeQuery->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id);
+            } elseif ($user->departemen_id) {
+                $taskQuery->whereHas('assignments.user', fn($q) => $q->where('departemen_id', $user->departemen_id));
+                $assignmentQuery->whereHas('user', fn($q) => $q->where('departemen_id', $user->departemen_id));
+                $checklistQuery->whereHas('assignment.user', fn($q) => $q->where('departemen_id', $user->departemen_id));
+                $employeeQuery->where('departemen_id', $user->departemen_id);
+            } elseif ($user->divisi_id || $user->divisi) {
+                $taskQuery->where('divisi', $user->divisi);
+                $assignmentQuery->whereHas('task', fn($q) => $q->where('divisi', $user->divisi));
+                $checklistQuery->whereHas('assignment.task', fn($q) => $q->where('divisi', $user->divisi));
+                $employeeQuery->where('divisi', $user->divisi);
+            }
+            $scopeTitle = $user->departemen ? ('Departemen ' . $user->departemen) : ('Divisi ' . ($user->divisi ?? '-'));
 
-        } elseif (in_array($user->role, ['direksi', 'manager'])) {
-            $scopeTitle = 'Semua Divisi';
+        } elseif (in_array($user->role, ['direksi', 'gh', 'div_head', 'super_admin'])) {
+            $scopeTitle = 'Semua Divisi & Departemen';
 
         } else {
             $assignmentQuery->where('user_id', $user->id);
@@ -134,13 +146,11 @@ class HomeController extends Controller
         | EMPLOYEE PERFORMANCE
         |--------------------------------------------------------------------------
         */
-        $employees     = $employeeQuery->get();
+        $employees     = $employeeQuery->with(['assignments.task', 'assignments.checklists'])->get();
         $employeeStats = [];
 
         foreach ($employees as $employee) {
-            $assignments = TaskAssignment::with(['task', 'checklists'])
-                ->where('user_id', $employee->id)
-                ->get();
+            $assignments = $employee->assignments;
 
             $statusCounts = $assignments
                 ->map(fn($assignment) => $resolveAssignmentStatus($assignment))
@@ -153,7 +163,7 @@ class HomeController extends Controller
             $pendingTasks    = (int) ($statusCounts['pending'] ?? 0);
             $projectCountEmp = $assignments->pluck('task_id')->unique()->count();
 
-            $checklists     = TaskChecklist::whereHas('assignment', fn($q) => $q->where('user_id', $employee->id))->get();
+            $checklists     = $assignments->flatMap(fn($a) => $a->checklists);
             $totalChecklist = $checklists->count();
             $doneChecklist  = $checklists->where('is_done', 1)->count();
 
@@ -248,25 +258,27 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
     ->where('longitude', '!=', '')
     ->where('is_done', true);
 
-                if ($user->role === 'admin_divisi') {
+        if ($user->role === 'admin_dept') {
             $dailyLocationQuery->whereHas('routine.user', fn($q) =>
-                $q->where('divisi', $user->divisi)
-                  ->whereIn('role', ['staff', 'supervisor'])
+                ($user->departemen_id && $user->divisi_id)
+                    ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
+                    : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
             $dailyHistoryQuery->whereHas('history.user', fn($q) =>
-                $q->where('divisi', $user->divisi)
-                  ->whereIn('role', ['staff', 'supervisor'])
+                ($user->departemen_id && $user->divisi_id)
+                    ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
+                    : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
-        } elseif ($user->role === 'supervisor') {
-            $supervisorStaffIds = \App\Models\User::where('supervisor_id', $user->id)
-                ->pluck('id')
-                ->push($user->id);
-
-            $dailyLocationQuery->whereHas('routine', fn($q) =>
-                $q->whereIn('user_id', $supervisorStaffIds)
+        } elseif ($user->role === 'dept_head') {
+            $dailyLocationQuery->whereHas('routine.user', fn($q) =>
+                ($user->departemen_id && $user->divisi_id)
+                    ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
+                    : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
-            $dailyHistoryQuery->whereHas('history', fn($q) =>
-                $q->whereIn('user_id', $supervisorStaffIds)
+            $dailyHistoryQuery->whereHas('history.user', fn($q) =>
+                ($user->departemen_id && $user->divisi_id)
+                    ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
+                    : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
         } elseif ($user->role === 'staff') {
             $dailyLocationQuery->whereHas('routine', fn($q) =>
@@ -276,7 +288,7 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
                 $q->where('user_id', $user->id)
             );
         }
-        // direksi: tidak ada filter tambahan, lihat semua
+        // direksi, gh, div_head: tidak ada filter tambahan, lihat semua
 
         $dailyLocations        = $dailyLocationQuery->latest()->get();
         $dailyHistoryLocations = $dailyHistoryQuery->latest()->get();
@@ -290,9 +302,11 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
-        if (in_array($user->role, ['admin_divisi', 'supervisor'])) {
-            $taskChecklistQuery->whereHas('assignment.task', fn($q) =>
-                $q->where('divisi', $user->divisi)
+        if (in_array($user->role, ['admin_dept', 'dept_head'])) {
+            $taskChecklistQuery->whereHas('assignment.user', fn($q) =>
+                ($user->departemen_id && $user->divisi_id)
+                    ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
+                    : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
         } elseif ($user->role === 'staff') {
             $taskChecklistQuery->whereHas('assignment', fn($q) =>
@@ -373,15 +387,23 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
         $user = Auth::user();
         $divisi = $user->divisi;
 
-        $supervisors = User::where('role', 'supervisor')
-            ->where('divisi', $divisi)
-            ->get();
+        $supervisorsQuery = User::whereIn('role', ['dept_head']);
+        $staffQuery = User::where('role', 'staff');
 
-        $staff = User::where('role', 'staff')
-            ->where('divisi', $divisi)
-            ->get();
+        if ($user->role === 'admin_dept') {
+            $supervisorsQuery->where('divisi_id', $user->divisi_id)
+                             ->where('departemen_id', $user->departemen_id);
+            $staffQuery->where('divisi_id', $user->divisi_id)
+                       ->where('departemen_id', $user->departemen_id);
+        } else {
+            $supervisorsQuery->where('divisi', $divisi);
+            $staffQuery->where('divisi', $divisi);
+        }
 
-        return view('manager.management-team', compact('supervisors', 'staff', 'divisi'));
+        $supervisors = $supervisorsQuery->get();
+        $staff = $staffQuery->get();
+
+        return view('divhead.management-team', compact('supervisors', 'staff', 'divisi'));
     }
 
     public function assignSupervisor(\Illuminate\Http\Request $request)
@@ -395,13 +417,24 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
         foreach ($request->assignments as $item) {
             $user = \App\Models\User::find($item['user_id']);
             if ($user) {
+                if ($item['supervisor_id']) {
+                    $supervisor = \App\Models\User::find($item['supervisor_id']);
+                    if ($supervisor) {
+                        $diffDept = ($supervisor->departemen_id && $user->departemen_id && $supervisor->departemen_id != $user->departemen_id);
+                        $diffDiv = ($supervisor->divisi_id && $user->divisi_id && $supervisor->divisi_id != $user->divisi_id);
+                        if ($diffDept || $diffDiv) {
+                            return redirect()->route('divhead.management.team')
+                                ->with('error', 'Gagal: Staff dan Dept Head harus berada di divisi dan departemen yang sama.');
+                        }
+                    }
+                }
                 $user->supervisor_id = $item['supervisor_id'] ?? null;
                 $user->save();
             }
         }
 
-        return redirect()->route('manager.management.team')
-            ->with('success', 'Assignment supervisor berhasil disimpan');
+        return redirect()->route('divhead.management.team')
+            ->with('success', 'Assignment Dept Head berhasil disimpan');
     }
 
     public function assignMultipleToSupervisor(\Illuminate\Http\Request $request)
@@ -415,6 +448,26 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
         $supervisorId = $request->supervisor_id;
         $selected = $request->staff_ids ?? [];
 
+        $supervisor = \App\Models\User::findOrFail($supervisorId);
+
+        // Validate that all selected staff are in the same division and department as the supervisor
+        if ($supervisor->departemen_id || $supervisor->divisi_id) {
+            $invalidStaffQuery = \App\Models\User::whereIn('id', $selected);
+            if ($supervisor->departemen_id) {
+                $invalidStaffQuery->where(function($q) use ($supervisor) {
+                    $q->where('departemen_id', '!=', $supervisor->departemen_id)
+                      ->orWhere('divisi_id', '!=', $supervisor->divisi_id);
+                });
+            } else {
+                $invalidStaffQuery->where('divisi_id', '!=', $supervisor->divisi_id);
+            }
+
+            if ($invalidStaffQuery->count() > 0) {
+                return redirect()->route('divhead.management.team')
+                    ->with('error', 'Gagal: Semua staff yang dipilih harus berada di divisi dan departemen yang sama dengan Dept Head.');
+            }
+        }
+
         // Remove supervisor from users previously assigned to this supervisor but not selected now
         \App\Models\User::where('supervisor_id', $supervisorId)
             ->whereNotIn('id', $selected)
@@ -425,7 +478,7 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
                 ->update(['supervisor_id' => $supervisorId]);
         }
 
-        return redirect()->route('manager.management.team')
-            ->with('success', 'Assignment supervisor berhasil diperbarui');
+        return redirect()->route('divhead.management.team')
+            ->with('success', 'Assignment Dept Head berhasil diperbarui');
     }
 }
