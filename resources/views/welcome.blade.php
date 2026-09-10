@@ -6,7 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BIOS - Borobudur Integrated Operation System</title>
 
-    @vite('resources/css/app.css')
+    @php
+        $manifestPath = public_path('build/manifest.json');
+    @endphp
+
+    @if (file_exists($manifestPath))
+        @vite('resources/css/app.css')
+    @endif
+
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
