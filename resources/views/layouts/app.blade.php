@@ -9,7 +9,7 @@
     <meta name="csrf-token"
           content="{{ csrf_token() }}">
 
-    <title>MBG Dashboard</title>
+    <title>Dashboard</title>
 
     @vite([
         'resources/css/app.css',

@@ -46,6 +46,11 @@ class User extends Authenticatable
         return $this->hasMany(TaskAssignment::class);
     }
 
+    public function dailyRoutines()
+    {
+        return $this->hasMany(DailyRoutine::class);
+    }
+
     public function supervisor()
     {
         return $this->belongsTo(User::class, 'supervisor_id');
