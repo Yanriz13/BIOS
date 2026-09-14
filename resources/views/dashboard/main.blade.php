@@ -413,6 +413,10 @@
                         <th class="px-4 py-3 text-center font-semibold">CL Selesai</th>
                         <th class="px-4 py-3 text-center font-semibold">Avg. Waktu</th>
                         <th class="px-4 py-3 text-center font-semibold">SLA</th>
+                        <th class="px-4 py-3 text-center font-semibold border-l border-slate-200">Rutin</th>
+                        <th class="px-4 py-3 text-center font-semibold">Rutin Done</th>
+                        <th class="px-4 py-3 text-center font-semibold">CL Rutin</th>
+                        <th class="px-4 py-3 text-center font-semibold">SLA Rutin</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -484,11 +488,21 @@
                                     </div>
                                 </div>
                             </td>
+                            <td class="px-4 py-4 text-center font-semibold text-slate-700 border-l border-slate-200">{{ $emp['routine_count'] }}</td>
+                            <td class="px-4 py-4 text-center">
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-xs">{{ $emp['routine_done'] }}</span>
+                            </td>
+                            <td class="px-4 py-4 text-center font-semibold text-slate-700">{{ $emp['routine_checklist_done'] }}/{{ $emp['routine_checklist_total'] }}</td>
+                            <td class="px-4 py-4 text-center">
+                                <span class="text-xs font-bold {{ $emp['routine_sla'] >= 80 ? 'text-emerald-600' : ($emp['routine_sla'] >= 50 ? 'text-yellow-600' : 'text-red-500') }}">
+                                    {{ $emp['routine_sla'] }}%
+                                </span>
+                            </td>
                         </tr>
 
                         {{-- DETAIL EXPAND ROW --}}
                         <tr id="{{ $rowId }}" class="hidden bg-slate-50/80">
-                            <td colspan="12" class="px-6 py-4">
+                            <td colspan="16" class="px-6 py-4">
 
                                 {{-- Judul --}}
                                 <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
@@ -550,6 +564,61 @@
                                                     <p class="px-4 py-2 text-xs text-slate-400 italic">Tidak ada checklist.</p>
                                                 @endif
 
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                {{-- Judul Daily Routine --}}
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mt-5 mb-3">
+                                    Detail Daily Routine — {{ $emp['employee']->name }}
+                                </p>
+
+                                @if(count($emp['routine_detail']) === 0)
+                                    <p class="text-sm text-slate-400 italic">Tidak ada daily routine.</p>
+                                @else
+                                    <div class="space-y-3">
+                                        @foreach($emp['routine_detail'] as $rd)
+                                            @php
+                                                $rClPct = $rd['total_cl'] > 0 ? round(($rd['done_cl'] / $rd['total_cl']) * 100) : 0;
+                                                $rStatusColor = match($rd['status']) {
+                                                    'done'     => 'bg-emerald-100 text-emerald-700',
+                                                    'progress' => 'bg-yellow-100 text-yellow-700',
+                                                    default    => 'bg-slate-200 text-slate-600',
+                                                };
+                                            @endphp
+
+                                            <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                                                <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-100">
+                                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                                        <span class="text-xs font-bold px-2.5 py-1 rounded-full {{ $rStatusColor }}">
+                                                            {{ strtoupper($rd['status']) }}
+                                                        </span>
+                                                        <p class="font-semibold text-slate-800 text-sm truncate">{{ $rd['title'] }}</p>
+                                                    </div>
+                                                    <div class="flex items-center gap-3 shrink-0 text-xs text-slate-500">
+                                                        <span class="font-semibold text-slate-700">{{ $rd['done_cl'] }}/{{ $rd['total_cl'] }} CL</span>
+                                                        <span class="font-bold text-slate-700">{{ $rClPct }}%</span>
+                                                    </div>
+                                                </div>
+
+                                                @if(count($rd['checklists']) > 0)
+                                                    <div class="px-4 py-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                                                        @foreach($rd['checklists'] as $cl)
+                                                            <div class="flex items-center gap-2 text-xs py-1">
+                                                                @if($cl['is_done'])
+                                                                    <span class="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-white shrink-0" style="font-size:9px">✓</span>
+                                                                    <span class="text-slate-500 line-through">{{ $cl['name'] }}</span>
+                                                                @else
+                                                                    <span class="w-4 h-4 rounded-full border-2 border-slate-300 shrink-0"></span>
+                                                                    <span class="text-slate-700">{{ $cl['name'] }}</span>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <p class="px-4 py-2 text-xs text-slate-400 italic">Tidak ada checklist.</p>
+                                                @endif
                                             </div>
                                         @endforeach
                                     </div>

@@ -146,7 +146,7 @@ class HomeController extends Controller
         | EMPLOYEE PERFORMANCE
         |--------------------------------------------------------------------------
         */
-        $employees     = $employeeQuery->with(['assignments.task', 'assignments.checklists'])->get();
+        $employees     = $employeeQuery->with(['assignments.task', 'assignments.checklists', 'dailyRoutines.checklists'])->get();
         $employeeStats = [];
 
         foreach ($employees as $employee) {
@@ -212,18 +212,47 @@ class HomeController extends Controller
                 ? round($durationHours->avg())
                 : null;
 
+            $routines            = $employee->dailyRoutines;
+            $routineChecklists   = $routines->flatMap(fn($r) => $r->checklists);
+            $routineCount        = $routines->count();
+            $routineDone         = $routines->where('status', 'done')->count();
+            $routineChecklistTotal = $routineChecklists->count();
+            $routineChecklistDone  = $routineChecklists->where('is_done', 1)->count();
+            $routineSla          = $routineChecklistTotal > 0
+                ? round(($routineChecklistDone / $routineChecklistTotal) * 100)
+                : 0;
+
+            $routineDetail = $routines->map(function ($r) {
+                return [
+                    'title'      => $r->title,
+                    'status'     => $r->status,
+                    'total_cl'   => $r->checklists->count(),
+                    'done_cl'    => $r->checklists->where('is_done', 1)->count(),
+                    'checklists' => $r->checklists->map(fn($cl) => [
+                        'name'    => $cl->title,
+                        'is_done' => $cl->is_done,
+                    ])->values(),
+                ];
+            })->values();
+
             $employeeStats[] = [
-                'employee'        => $employee,
-                'project_count'   => $projectCountEmp,
-                'task_count'      => $totalTasks,
-                'done_tasks'      => $doneTasks,
-                'progress_tasks'  => $progressTasks,
-                'pending_tasks'   => $pendingTasks,
-                'total_checklist' => $totalChecklist,
-                'done_checklist'  => $doneChecklist,
-                 'avg_duration'    => $avgDuration,
-                'sla'             => $sla,
-                'task_detail'     => $taskDetail,
+                'employee'          => $employee,
+                'project_count'     => $projectCountEmp,
+                'task_count'        => $totalTasks,
+                'done_tasks'        => $doneTasks,
+                'progress_tasks'    => $progressTasks,
+                'pending_tasks'     => $pendingTasks,
+                'total_checklist'   => $totalChecklist,
+                'done_checklist'    => $doneChecklist,
+                 'avg_duration'     => $avgDuration,
+                'sla'               => $sla,
+                'task_detail'       => $taskDetail,
+                'routine_count'     => $routineCount,
+                'routine_done'      => $routineDone,
+                'routine_checklist_total' => $routineChecklistTotal,
+                'routine_checklist_done'  => $routineChecklistDone,
+                'routine_sla'       => $routineSla,
+                'routine_detail'    => $routineDetail,
             ];
         }
 
