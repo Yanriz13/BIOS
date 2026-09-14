@@ -39,10 +39,8 @@ class HomeController extends Controller
                 $employeeQuery->where('divisi', $user->divisi);
             }
             $scopeTitle = $user->departemen ? ('Departemen ' . $user->departemen) : ('Divisi ' . ($user->divisi ?? '-'));
-
         } elseif (in_array($user->role, ['direksi', 'gh', 'div_head', 'super_admin'])) {
             $scopeTitle = 'Semua Divisi & Departemen';
-
         } else {
             $assignmentQuery->where('user_id', $user->id);
             $checklistQuery->whereHas('assignment', fn($q) => $q->where('user_id', $user->id));
@@ -244,7 +242,7 @@ class HomeController extends Controller
                 'pending_tasks'     => $pendingTasks,
                 'total_checklist'   => $totalChecklist,
                 'done_checklist'    => $doneChecklist,
-                 'avg_duration'     => $avgDuration,
+                'avg_duration'     => $avgDuration,
                 'sla'               => $sla,
                 'task_detail'       => $taskDetail,
                 'routine_count'     => $routineCount,
@@ -274,46 +272,54 @@ class HomeController extends Controller
         | MAP LOCATIONS — DailyRoutineChecklist
         |--------------------------------------------------------------------------
         */
-      $dailyLocationQuery = DailyRoutineChecklist::with(['routine.user'])
-    ->whereNotNull('latitude')
-    ->whereNotNull('longitude')
-    ->where('latitude', '!=', '')
-    ->where('longitude', '!=', '');
+        $dailyLocationQuery = DailyRoutineChecklist::with(['routine.user'])
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->where('latitude', '!=', '')
+            ->where('longitude', '!=', '');
 
-$dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
-    ->whereNotNull('latitude')
-    ->whereNotNull('longitude')
-    ->where('latitude', '!=', '')
-    ->where('longitude', '!=', '')
-    ->where('is_done', true);
+        $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->where('latitude', '!=', '')
+            ->where('longitude', '!=', '')
+            ->where('is_done', true);
 
         if ($user->role === 'admin_dept') {
-            $dailyLocationQuery->whereHas('routine.user', fn($q) =>
-                ($user->departemen_id && $user->divisi_id)
+            $dailyLocationQuery->whereHas(
+                'routine.user',
+                fn($q) => ($user->departemen_id && $user->divisi_id)
                     ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
                     : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
-            $dailyHistoryQuery->whereHas('history.user', fn($q) =>
-                ($user->departemen_id && $user->divisi_id)
+            $dailyHistoryQuery->whereHas(
+                'history.user',
+                fn($q) => ($user->departemen_id && $user->divisi_id)
                     ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
                     : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
         } elseif ($user->role === 'dept_head') {
-            $dailyLocationQuery->whereHas('routine.user', fn($q) =>
-                ($user->departemen_id && $user->divisi_id)
+            $dailyLocationQuery->whereHas(
+                'routine.user',
+                fn($q) => ($user->departemen_id && $user->divisi_id)
                     ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
                     : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
-            $dailyHistoryQuery->whereHas('history.user', fn($q) =>
-                ($user->departemen_id && $user->divisi_id)
+            $dailyHistoryQuery->whereHas(
+                'history.user',
+                fn($q) => ($user->departemen_id && $user->divisi_id)
                     ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
                     : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
         } elseif ($user->role === 'staff') {
-            $dailyLocationQuery->whereHas('routine', fn($q) =>
+            $dailyLocationQuery->whereHas(
+                'routine',
+                fn($q) =>
                 $q->where('user_id', $user->id)
             );
-            $dailyHistoryQuery->whereHas('history', fn($q) =>
+            $dailyHistoryQuery->whereHas(
+                'history',
+                fn($q) =>
                 $q->where('user_id', $user->id)
             );
         }
@@ -332,13 +338,16 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
             ->whereNotNull('longitude');
 
         if (in_array($user->role, ['admin_dept', 'dept_head'])) {
-            $taskChecklistQuery->whereHas('assignment.user', fn($q) =>
-                ($user->departemen_id && $user->divisi_id)
+            $taskChecklistQuery->whereHas(
+                'assignment.user',
+                fn($q) => ($user->departemen_id && $user->divisi_id)
                     ? $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id)
                     : ($user->departemen_id ? $q->where('departemen_id', $user->departemen_id) : $q->where('divisi', $user->divisi))
             );
         } elseif ($user->role === 'staff') {
-            $taskChecklistQuery->whereHas('assignment', fn($q) =>
+            $taskChecklistQuery->whereHas(
+                'assignment',
+                fn($q) =>
                 $q->where('user_id', $user->id)
             );
         }
@@ -351,48 +360,48 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
         | GABUNGKAN KE $dashboardLocations
         |--------------------------------------------------------------------------
         */
-    $dashboardLocations = $dailyLocations->map(fn($item) => [
-    'id'        => 'daily_' . $item->id,
-    'title'     => $item->title ?? 'Daily Routine',
-    'lat'       => ($item->latitude  !== null && $item->latitude  !== '') ? (float) $item->latitude  : null,
-    'lng'       => ($item->longitude !== null && $item->longitude !== '') ? (float) $item->longitude : null,
-    'address'   => $item->address,
-    'created'   => optional($item->created_at)->format('d M Y H:i'),
-    'user_name' => optional($item->routine?->user)->name ?? '-',
-    'task_name' => '-',
-    'file_path' => $item->file_path,
-    'file_type' => $item->file_type,
-    'source'    => 'daily',
-])->filter(fn($item) => $item['lat'] !== null && $item['lng'] !== null)
-  ->merge(
-    $dailyHistoryLocations->map(fn($item) => [
-        'id'        => 'daily_hist_' . $item->id,
-        'title'     => $item->title ?? 'Daily Routine (Arsip)',
-        'lat'       => ($item->latitude  !== null && $item->latitude  !== '') ? (float) $item->latitude  : null,
-        'lng'       => ($item->longitude !== null && $item->longitude !== '') ? (float) $item->longitude : null,
-        'address'   => $item->address,
-        'created'   => optional($item->created_at)->format('d M Y H:i'),
-        'user_name' => optional($item->history?->user)->name ?? '-',
-        'task_name' => '-',
-        'file_path' => $item->file_path,
-        'file_type' => $item->file_type,
-        'source'    => 'daily',
-    ])->filter(fn($item) => $item['lat'] !== null && $item['lng'] !== null)
-)->merge(
-    $taskLocations->map(fn($item) => [
-        'id'        => 'task_' . $item->id,
-        'title'     => $item->title ?? 'Task Checklist',
-        'lat'       => ($item->latitude  !== null && $item->latitude  !== '') ? (float) $item->latitude  : null,
-        'lng'       => ($item->longitude !== null && $item->longitude !== '') ? (float) $item->longitude : null,
-        'address'   => $item->address,
-        'created'   => optional($item->created_at)->format('d M Y H:i'),
-        'user_name' => optional($item->assignment?->user)->name  ?? '-',
-        'task_name' => optional($item->assignment?->task)->title ?? '-',
-        'file_path' => $item->file_path,
-        'file_type' => $item->file_type,
-        'source'    => 'task',
-    ])->filter(fn($item) => $item['lat'] !== null && $item['lng'] !== null)
-)->values();
+        $dashboardLocations = $dailyLocations->map(fn($item) => [
+            'id'        => 'daily_' . $item->id,
+            'title'     => $item->title ?? 'Daily Routine',
+            'lat'       => ($item->latitude  !== null && $item->latitude  !== '') ? (float) $item->latitude  : null,
+            'lng'       => ($item->longitude !== null && $item->longitude !== '') ? (float) $item->longitude : null,
+            'address'   => $item->address,
+            'created'   => optional($item->created_at)->format('d M Y H:i'),
+            'user_name' => optional($item->routine?->user)->name ?? '-',
+            'task_name' => '-',
+            'file_path' => $item->file_path,
+            'file_type' => $item->file_type,
+            'source'    => 'daily',
+        ])->filter(fn($item) => $item['lat'] !== null && $item['lng'] !== null)
+            ->merge(
+                $dailyHistoryLocations->map(fn($item) => [
+                    'id'        => 'daily_hist_' . $item->id,
+                    'title'     => $item->title ?? 'Daily Routine (Arsip)',
+                    'lat'       => ($item->latitude  !== null && $item->latitude  !== '') ? (float) $item->latitude  : null,
+                    'lng'       => ($item->longitude !== null && $item->longitude !== '') ? (float) $item->longitude : null,
+                    'address'   => $item->address,
+                    'created'   => optional($item->created_at)->format('d M Y H:i'),
+                    'user_name' => optional($item->history?->user)->name ?? '-',
+                    'task_name' => '-',
+                    'file_path' => $item->file_path,
+                    'file_type' => $item->file_type,
+                    'source'    => 'daily',
+                ])->filter(fn($item) => $item['lat'] !== null && $item['lng'] !== null)
+            )->merge(
+                $taskLocations->map(fn($item) => [
+                    'id'        => 'task_' . $item->id,
+                    'title'     => $item->title ?? 'Task Checklist',
+                    'lat'       => ($item->latitude  !== null && $item->latitude  !== '') ? (float) $item->latitude  : null,
+                    'lng'       => ($item->longitude !== null && $item->longitude !== '') ? (float) $item->longitude : null,
+                    'address'   => $item->address,
+                    'created'   => optional($item->created_at)->format('d M Y H:i'),
+                    'user_name' => optional($item->assignment?->user)->name  ?? '-',
+                    'task_name' => optional($item->assignment?->task)->title ?? '-',
+                    'file_path' => $item->file_path,
+                    'file_type' => $item->file_type,
+                    'source'    => 'task',
+                ])->filter(fn($item) => $item['lat'] !== null && $item['lng'] !== null)
+            )->values();
 
         return view('dashboard.main', compact(
             'projects',
@@ -421,9 +430,9 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
 
         if ($user->role === 'admin_dept') {
             $supervisorsQuery->where('divisi_id', $user->divisi_id)
-                             ->where('departemen_id', $user->departemen_id);
+                ->where('departemen_id', $user->departemen_id);
             $staffQuery->where('divisi_id', $user->divisi_id)
-                       ->where('departemen_id', $user->departemen_id);
+                ->where('departemen_id', $user->departemen_id);
         } else {
             $supervisorsQuery->where('divisi', $divisi);
             $staffQuery->where('divisi', $divisi);
@@ -483,9 +492,9 @@ $dailyHistoryQuery = DailyRoutineChecklistHistory::with(['history.user'])
         if ($supervisor->departemen_id || $supervisor->divisi_id) {
             $invalidStaffQuery = \App\Models\User::whereIn('id', $selected);
             if ($supervisor->departemen_id) {
-                $invalidStaffQuery->where(function($q) use ($supervisor) {
+                $invalidStaffQuery->where(function ($q) use ($supervisor) {
                     $q->where('departemen_id', '!=', $supervisor->departemen_id)
-                      ->orWhere('divisi_id', '!=', $supervisor->divisi_id);
+                        ->orWhere('divisi_id', '!=', $supervisor->divisi_id);
                 });
             } else {
                 $invalidStaffQuery->where('divisi_id', '!=', $supervisor->divisi_id);
