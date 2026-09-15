@@ -110,7 +110,7 @@ class DailyRoutineController extends Controller
                 })
                 ->latest()
                 ->get()
-                ->unique(fn ($routine) => $routine->user_id . '|' . $routine->title . '|' . $routine->deadline)
+                ->unique(fn($routine) => $routine->user_id . '|' . $routine->title . '|' . $routine->deadline)
                 ->values()
                 ->filter(function ($routine) use ($today, $canManageRoutines) {
                     if ($canManageRoutines) {
@@ -160,7 +160,7 @@ class DailyRoutineController extends Controller
 
         $routines = $routineQuery->latest()
             ->get()
-            ->unique(fn ($routine) => $routine->user_id . '|' . $routine->title . '|' . $routine->deadline)
+            ->unique(fn($routine) => $routine->user_id . '|' . $routine->title . '|' . $routine->deadline)
             ->values()
             ->filter(function ($routine) use ($today, $canManageRoutines) {
                 if ($canManageRoutines) {
