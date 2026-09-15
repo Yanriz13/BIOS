@@ -608,11 +608,11 @@
     function closeStaffChatPanel(){const p=document.getElementById('staffChatPanel');p.classList.add('hidden');p.classList.remove('flex');}
     function sendStaffChatMessage(){const input=document.getElementById('staffChatInput'),text=input.value.trim();if(!text)return;const payload={body:text,room_type:staffChatRoomType};if(staffChatRoomType==='task')payload.task_id=staffChatRoomId;fetch('/chat/message',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content,'Accept':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()).then(data=>{if(data.success){input.value='';openStaffChat(staffChatRoomType,staffChatRoomId,document.getElementById('staffChatPanelTitle').textContent);}});}
     </script>
-    
+
 
 
     {{-- HEADER --}}
-   
+
 
 <script>
 function toggleSupAssignment(rowId, tr) {

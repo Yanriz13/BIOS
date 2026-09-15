@@ -1128,7 +1128,7 @@
 
                                                                                 {{-- Reply --}}
                                                                                 <div class="relative group">
-<!-- 
+<!--
                                                                                     <button type="button"
                                                                                         onclick="event.stopPropagation(); openChecklistReply({{ $c->id }}, '{{ addslashes($c->title) }}', {{ $task->id }}, '{{ addslashes($task->title) }}')"
                                                                                         class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 hover:bg-indigo-600 hover:text-white transition">
@@ -2127,8 +2127,8 @@
                 wrapper.className = "flex items-center gap-2";
 
                 wrapper.innerHTML = `
-            <input 
-                name="checklists[]" 
+            <input
+                name="checklists[]"
                 class="border border-slate-200 rounded-xl px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 placeholder="Todolist"
             />

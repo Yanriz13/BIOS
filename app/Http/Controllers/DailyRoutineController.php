@@ -235,7 +235,6 @@ class DailyRoutineController extends Controller
                 'message' => 'Daily routine berhasil dibuat.',
                 'data' => $routine->load('checklists', 'user'),
             ]);
-
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -769,7 +768,6 @@ class DailyRoutineController extends Controller
                     }
 
                     DB::commit();
-
                 } catch (\Throwable $e) {
 
                     DB::rollBack();

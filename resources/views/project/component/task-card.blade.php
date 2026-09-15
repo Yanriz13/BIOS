@@ -6,13 +6,13 @@
         'medium' => '🟡',
         default  => '🟢'
     };
-    
+
     $priorityBg = match($task->priority) {
         'high'   => 'bg-red-50 border-red-200 hover:bg-red-100',
         'medium' => 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100',
         default  => 'bg-green-50 border-green-200 hover:bg-green-100'
     };
-    
+
     $priorityText = match($task->priority) {
         'high'   => 'text-red-700',
         'medium' => 'text-yellow-700',
@@ -31,7 +31,7 @@
     <div class="h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 group-hover:via-indigo-600"></div>
 
     <div class="p-5 space-y-4">
-        
+
         {{-- TITLE & PRIORITY --}}
         <div class="flex items-start justify-between gap-2">
             <div class="min-w-0 flex-1">

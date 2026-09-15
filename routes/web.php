@@ -41,7 +41,6 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::get('/super-admin/dashboard', function () {
             return view('dashboard.superadmin');
         })->name('superadmin.dashboard');
-
     });
 
 // =============================
@@ -55,7 +54,6 @@ Route::middleware(['auth', 'role:admin_dept,div_head,direksi,gh'])
 
         Route::get('/divhead/management-tim', [HomeController::class, 'managementTeam'])
             ->name('divhead.management.team');
-
     });
 
 Route::middleware(['auth', 'role:admin_dept,div_head'])
@@ -76,7 +74,6 @@ Route::middleware(['auth', 'role:staff'])
 
         Route::get('/staff/dashboard', [HomeController::class, 'index'])
             ->name('staff.dashboard');
-
     });
 
 
@@ -91,7 +88,6 @@ Route::middleware(['auth', 'role:dept_head'])
 
         Route::get('/depthead/project', [ProjectController::class, 'deptheadProject'])
             ->name('depthead.project.index');
-
     });
 
 
@@ -121,7 +117,6 @@ Route::middleware(['auth', 'role:admin_dept,div_head,direksi,gh'])
 
         Route::get('/project/{id}/detail', [ProjectController::class, 'detail'])
             ->name('project.detail');
-
     });
 
 
@@ -175,7 +170,6 @@ Route::middleware(['auth', 'role:admin_dept,div_head'])
 
         Route::patch('/project/checklist/{id}/divhead-uncheck', [ProjectController::class, 'divheadUncheck'])
             ->name('project.checklist.divhead-uncheck');
-
     });
 
 
@@ -196,7 +190,6 @@ Route::middleware(['auth', 'role:staff,dept_head'])
 
         Route::delete('/project/checklist/{id}/delete-file', [ProjectController::class, 'deleteChecklistFile'])
             ->name('project.checklist.delete-file');
-
     });
 
 
@@ -219,7 +212,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/chat/notifications', [ChatController::class, 'notifications'])
         ->name('chat.notifications');
-
 });
 
 
@@ -236,7 +228,6 @@ Route::prefix('project/daily-routine')
 
         Route::get('/history', [DailyRoutineController::class, 'history'])
             ->name('history');
-
     });
 
 
@@ -274,7 +265,6 @@ Route::prefix('project/daily-routine')
 
         Route::patch('checklist/{checklistId}/divhead-uncheck', [DailyRoutineController::class, 'checklistDivheadUncheck'])
             ->name('checklist.divhead-uncheck');
-
     });
 
 
@@ -294,5 +284,4 @@ Route::prefix('project/daily-routine')
 
         Route::delete('checklist/{checklistId}/delete-file', [DailyRoutineController::class, 'checklistDeleteFile'])
             ->name('checklist.delete-file');
-
     });

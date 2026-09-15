@@ -795,7 +795,7 @@ $overdue = strtolower($routine->deadline) === $today
 
             <label class="day-pill flex flex-col items-center gap-1 cursor-pointer select-none">
 
-                <input 
+                <input
                     type="checkbox"
                     value="{{ $val }}"
                     class="sr-only peer day-check"
