@@ -263,6 +263,12 @@ Route::prefix('project/daily-routine')
         Route::delete('{id}', [DailyRoutineController::class, 'destroy'])
             ->name('destroy');
 
+        Route::post('{id}/checklist', [DailyRoutineController::class, 'checklistStore'])
+            ->name('checklist.store');
+
+        Route::post('checklist/add', [DailyRoutineController::class, 'checklistStoreLegacy'])
+            ->name('checklist.store-legacy');
+
         Route::delete('checklist/{checklistId}', [DailyRoutineController::class, 'checklistDestroy'])
             ->name('checklist.destroy');
 

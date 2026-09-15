@@ -130,7 +130,7 @@ $overdue = strtolower($routine->deadline) === $today
                                 <td class="px-4 py-3" onclick="event.stopPropagation()">
                                     @if($routine->user)
                                         <div class="flex items-center gap-2">
-                                            <img src="https://i.pravatar.cc/100?u={{ $routine->user_id }}"
+                                            <img src="{{ asset('images/user-default.svg') }}" alt="User default"
                                                 class="w-7 h-7 rounded-full border border-slate-200 shrink-0">
                                             <span class="text-xs text-slate-700 font-medium truncate">{{ $routine->user->name }}</span>
                                         </div>

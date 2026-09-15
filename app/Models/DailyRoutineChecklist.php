@@ -7,29 +7,33 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailyRoutineChecklist extends Model
 {
-protected $fillable = [
-    'daily_routine_id',
-    'title',
-    'is_done',
-    'day_name',
-    'file_path',
-    'file_name',
-    'file_type',
-    'latitude',
-    'longitude',
-    'address',
-];
+    protected $fillable = [
+        'daily_routine_id',
+        'title',
+        'is_done',
+        'day_name',
+        'file_path',
+        'file_name',
+        'file_type',
+        'uncheck_reason',
+        'checked_at',
+        'latitude',
+        'longitude',
+        'address',
+    ];
 
     protected $casts = [
         'is_done' => 'boolean',
+        'checked_at' => 'datetime',
     ];
 
     public function dailyRoutine(): BelongsTo
     {
         return $this->belongsTo(DailyRoutine::class);
     }
+
     public function routine()
-{
-    return $this->belongsTo(DailyRoutine::class, 'daily_routine_id');
-}
+    {
+        return $this->belongsTo(DailyRoutine::class, 'daily_routine_id');
+    }
 }

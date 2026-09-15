@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+  <title id="title">User default</title>
+  <desc id="desc">Default user profile logo</desc>
+  <rect width="120" height="120" rx="24" fill="#e0e7ff"/>
+  <circle cx="60" cy="44" r="22" fill="#6366f1"/>
+  <path d="M22 103c3-22 18-35 38-35s35 13 38 35" fill="#6366f1"/>
+</svg>

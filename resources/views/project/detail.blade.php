@@ -280,7 +280,7 @@
                                         <td class="px-8 py-6">
                                             @if($draft->user_id)
                                                 <div class="flex items-center gap-2.5">
-                                                    <img src="https://i.pravatar.cc/100?u={{ $draft->user_id }}"
+                                                    <img src="{{ asset('images/user-default.svg') }}"
                                                         class="w-8 h-8 rounded-xl border border-slate-200 shrink-0">
                                                     <div>
                                                         <p class="text-xs font-semibold text-slate-700 leading-tight">
@@ -557,7 +557,7 @@
                                         {{-- Staff --}}
                                         <td class="px-8 py-6">
                                             <div class="flex items-center gap-3.5">
-                                                <img src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                                                <img src="{{ asset('images/user-default.svg') }}"
                                                     class="w-10 h-10 rounded-2xl object-cover border border-slate-200 shrink-0">
                                                 <div>
                                                     <p class="font-semibold text-slate-800 text-sm">{{ $user->name }}</p>
@@ -571,7 +571,7 @@
                                         <td class="px-8 py-6">
                                             @if($spv->name)
                                                 <div class="flex items-center gap-3">
-                                                    <img src="https://i.pravatar.cc/100?u={{ $user->supervisor->id }}"
+                                                    <img src="{{ asset('images/user-default.svg') }}"
                                                         class="w-10 h-10 rounded-2xl object-cover border border-indigo-100 shrink-0">
                                                     <div>
                                                         <p class="font-semibold text-slate-800 text-sm">{{ $spv->name }}</p>
@@ -703,7 +703,7 @@
 
                                                 <div class="flex items-center gap-4">
 
-                                                    <img src="https://i.pravatar.cc/100?u={{ $user->id }}" alt="{{ $user->name }}"
+                                                    <img src="{{ asset('images/user-default.svg') }}" alt="{{ $user->name }}"
                                                         class="h-14 w-14 rounded-2xl border border-slate-200 object-cover shadow-sm">
 
                                                     <div class="min-w-0">
@@ -865,7 +865,7 @@
 
                                         <div class="relative">
 
-                                            <img src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                                            <img src="{{ asset('images/user-default.svg') }}"
                                                 class="w-14 h-14 rounded-2xl object-cover ring-4 ring-slate-100">
 
                                             <div
@@ -1342,7 +1342,7 @@
                                 {{-- Staff --}}
                                 <td class="px-8 py-6">
                                     <div class="flex items-center gap-3.5">
-                                        <img src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                                        <img src="{{ asset('images/user-default.svg') }}"
                                             class="w-10 h-10 rounded-2xl object-cover border border-slate-200 shrink-0">
                                         <div>
                                             <p class="font-semibold text-slate-800 text-sm">{{ $user->name }}</p>
@@ -1355,7 +1355,7 @@
                                 <td class="px-8 py-6">
                                     @if($spv->name)
                                         <div class="flex items-center gap-3">
-                                            <img src="https://i.pravatar.cc/100?u={{ $user->supervisor->id }}"
+                                            <img src="{{ asset('images/user-default.svg') }}"
                                                 class="w-10 h-10 rounded-2xl object-cover border border-indigo-100 shrink-0">
                                             <div>
                                                 <p class="font-semibold text-slate-800 text-sm">{{ $spv->name }}</p>
@@ -1990,7 +1990,7 @@
                 currentChatUserId = null;
                 currentAssignmentId = null;
                 currentReply = null;
-                const avatar = 'https://i.pravatar.cc/100?u=task-' + taskId;
+                const avatar = '{{ asset('images/user-default.svg') }}';
                 document.getElementById('chatPanelAvatar').src = avatar;
                 document.getElementById('chatPanelTitle').innerText = taskTitle;
                 document.getElementById('chatPanelSub').innerText = 'Task group chat';
@@ -2007,7 +2007,7 @@
                 currentChatRoomId = userId;
                 currentChatUserId = userId;
                 const userName = document.querySelector(`#task-${currentChatUserId} .font-bold`)?.innerText || 'User';
-                const avatar = 'https://i.pravatar.cc/100?u=' + currentChatUserId;
+                const avatar = '{{ asset('images/user-default.svg') }}';
                 document.getElementById('chatPanelAvatar').src = avatar;
                 document.getElementById('chatPanelTitle').innerText = userName;
                 document.getElementById('chatPanelSub').innerText = 'Chat with ' + userName;
@@ -2034,7 +2034,7 @@
                 currentChatUserId = null;
                 currentAssignmentId = null;
                 currentReply = { id: checklistId, name: checklistTitle, text: checklistTitle, type: 'checklist' };
-                const avatar = 'https://i.pravatar.cc/100?u=task-' + taskId;
+                const avatar = '{{ asset('images/user-default.svg') }}';
                 document.getElementById('chatPanelAvatar').src = avatar;
                 document.getElementById('chatPanelTitle').innerText = taskTitle;
                 document.getElementById('chatPanelSub').innerText = 'Reply checklist';
@@ -2076,7 +2076,7 @@
                     appendMessageBubble({
                         id: message.id,
                         name: fromUser.name || 'Unknown',
-                        avatar: fromUser.id ? `https://i.pravatar.cc/100?u=${fromUser.id}` : 'https://i.pravatar.cc/100',
+                        avatar: '{{ asset('images/user-default.svg') }}',
                         text: escapeHtml(message.body),
                         images: message.images || [],
                         isOwn: message.from_user_id === currentUserId,

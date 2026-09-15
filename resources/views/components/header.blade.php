@@ -79,7 +79,8 @@
             >
 
                 <img
-                    src="https://i.pravatar.cc/100"
+                    src="{{ asset('images/user-default.svg') }}"
+                    alt="User default"
                     class="w-9 h-9 lg:w-12 lg:h-12 rounded-lg object-cover"
                 >
 

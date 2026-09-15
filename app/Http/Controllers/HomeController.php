@@ -210,7 +210,11 @@ class HomeController extends Controller
                 ? round($durationHours->avg())
                 : null;
 
-            $routines            = $employee->dailyRoutines;
+            $routines = $employee->dailyRoutines()
+                ->with('checklists')
+                ->where('user_id', $employee->id)
+                ->get();
+
             $routineChecklists   = $routines->flatMap(fn($r) => $r->checklists);
             $routineCount        = $routines->count();
             $routineDone         = $routines->where('status', 'done')->count();

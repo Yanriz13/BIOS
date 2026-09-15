@@ -430,6 +430,7 @@
                         {{-- SUMMARY ROW --}}
                         <tr class="emp-row hover:bg-slate-50 transition-colors cursor-pointer"
                             data-progress="{{ $hasProgress ? 'yes' : 'no' }}"
+                            data-detail-id="{{ $rowId }}"
                             onclick="toggleEmpDetail('{{ $rowId }}', this)">
 
                             {{-- Toggle icon --}}
@@ -1025,17 +1026,43 @@ function toggleCard(detailId, headerEl) {
 
 /* ---- EMPLOYEE ROW TOGGLE ---- */
 function toggleEmpDetail(rowId, triggerRow) {
-    var detailRow = document.getElementById(rowId);
+    var detailRow = document.getElementById(rowId) || triggerRow.nextElementSibling;
     if (!detailRow) return;
-    var icon     = triggerRow.querySelector('.toggle-icon');
+
+    var icon = triggerRow.querySelector('.toggle-icon');
     var isHidden = detailRow.classList.contains('hidden');
+
+    document.querySelectorAll('.emp-row').forEach(function (row) {
+        var rowIcon = row.querySelector('.toggle-icon');
+        var rowIdValue = row.dataset.detailId;
+        var rowDetail = rowIdValue ? document.getElementById(rowIdValue) : null;
+
+        if (row !== triggerRow) {
+            if (rowDetail) rowDetail.classList.add('hidden');
+            if (rowIcon) {
+                rowIcon.style.transform = '';
+                rowIcon.style.background = '';
+                rowIcon.style.color = '';
+            }
+            row.style.background = '';
+        }
+    });
+
     if (isHidden) {
         detailRow.classList.remove('hidden');
-        if (icon) { icon.style.transform = 'rotate(90deg)'; icon.style.background = '#0f172a'; icon.style.color = '#fff'; }
+        if (icon) {
+            icon.style.transform = 'rotate(90deg)';
+            icon.style.background = '#0f172a';
+            icon.style.color = '#fff';
+        }
         triggerRow.style.background = '#f8fafc';
     } else {
         detailRow.classList.add('hidden');
-        if (icon) { icon.style.transform = ''; icon.style.background = ''; icon.style.color = ''; }
+        if (icon) {
+            icon.style.transform = '';
+            icon.style.background = '';
+            icon.style.color = '';
+        }
         triggerRow.style.background = '';
     }
 }

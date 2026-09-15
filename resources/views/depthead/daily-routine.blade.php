@@ -59,7 +59,7 @@
             {{-- Staff header --}}
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 md:px-6 py-4 bg-slate-50 border-b border-slate-200">
                 <div class="flex items-center gap-3">
-                    <img src="https://i.pravatar.cc/100?u={{ $member->id }}"
+                    <img src="{{ asset('images/user-default.svg') }}" alt="User default"
                          class="w-9 h-9 rounded-full border-2 border-white shadow-sm shrink-0" alt="">
                     <div class="min-w-0">
                         <p class="font-bold text-slate-800 truncate">{{ $member->name }}</p>
@@ -673,10 +673,10 @@ async function addChecklistItem(routineId, suffix) {
     const input = document.getElementById(inputId);
     const title = input?.value?.trim();
     if (!title) return;
-    const resp = await fetch('/project/daily-routine/checklist/add', {
+    const resp = await fetch(`/project/daily-routine/${routineId}/checklist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
-        body: JSON.stringify({ routine_id: routineId, title }),
+        body: JSON.stringify({ title }),
     });
     const data = await resp.json();
     if (data.success) location.reload();

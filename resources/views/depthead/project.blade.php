@@ -69,7 +69,7 @@
                 {{-- Staff Header --}}
                 <div class="flex items-center justify-between px-5 md:px-7 py-4 bg-slate-50 border-b border-slate-200">
                     <div class="flex items-center gap-3">
-                        <img src="https://i.pravatar.cc/100?u={{ $member->id }}"
+                        <img src="{{ asset('images/user-default.svg') }}" alt="User default"
                              class="w-9 h-9 rounded-full border-2 border-white shadow-sm shrink-0">
                         <div>
                             <p class="font-bold text-slate-800">{{ $member->name }}</p>
@@ -601,7 +601,7 @@
         const url=roomType==='task'?`/chat/room/task/${roomId}`:'/chat/room/global';
         fetch(url).then(r=>r.json()).then(data=>{
             const body=document.getElementById('staffChatMessages');body.innerHTML='';
-            (data.messages||[]).forEach(function(m){const isOwn=m.from_user?.id=={{ auth()->id() }};body.innerHTML+=isOwn?`<div class="flex justify-end"><div class="max-w-[70%] bg-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3 text-sm break-words">${m.body||''}</div></div>`:`<div class="flex gap-3"><img src="https://i.pravatar.cc/40?u=${m.from_user?.id}" class="w-8 h-8 rounded-full"><div class="max-w-[70%]"><p class="text-xs font-semibold text-slate-600 mb-1">${m.from_user?.name||''}</p><div class="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm text-sm text-slate-800 break-words">${m.body||''}</div></div></div>`;});
+            (data.messages||[]).forEach(function(m){const isOwn=m.from_user?.id=={{ auth()->id() }};body.innerHTML+=isOwn?`<div class="flex justify-end"><div class="max-w-[70%] bg-indigo-600 text-white rounded-2xl rounded-br-sm px-4 py-3 text-sm break-words">${m.body||''}</div></div>`:`<div class="flex gap-3"><img src="{{ asset('images/user-default.svg') }}" alt="User default" class="w-8 h-8 rounded-full"><div class="max-w-[70%]"><p class="text-xs font-semibold text-slate-600 mb-1">${m.from_user?.name||''}</p><div class="bg-white rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm text-sm text-slate-800 break-words">${m.body||''}</div></div></div>`;});
             body.scrollTop=body.scrollHeight;
         }).catch(()=>{});
     }

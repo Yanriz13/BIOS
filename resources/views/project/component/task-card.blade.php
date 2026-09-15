@@ -60,7 +60,7 @@
                 @foreach($task->users->take(5) as $user)
                     <img
                         draggable="false"
-                        src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                        src="{{ asset('images/user-default.svg') }}"
                         alt="{{ $user->name }}"
                         title="{{ $user->name }}"
                         class="w-11 h-11 rounded-full object-cover border-2 border-white shadow-md hover:scale-110 transition-transform"

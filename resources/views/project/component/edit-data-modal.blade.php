@@ -95,7 +95,7 @@
                                             </td>
                                             <td class="px-5 py-4">
                                                 <div class="flex items-center gap-3">
-                                                    <img src="https://i.pravatar.cc/100?u={{ $user->id }}" alt="{{ $user->name }}" class="h-11 w-11 rounded-2xl object-cover border border-slate-200">
+                                                    <img src="{{ asset('images/user-default.svg') }}" alt="{{ $user->name }}" class="h-11 w-11 rounded-2xl object-cover border border-slate-200">
                                                     <div class="min-w-0">
                                                         <p class="font-semibold text-slate-800 truncate">{{ $user->name }}</p>
                                                         <p class="text-xs text-slate-400 mt-0.5">ID User #{{ $user->id }}</p>

@@ -393,6 +393,57 @@ class DailyRoutineController extends Controller
         return response()->json(['success' => true, 'message' => 'Checklist dibatalkan.']);
     }
 
+    // ─── Checklist: add a new item ────────────────────────
+
+    public function checklistStoreLegacy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'routine_id' => 'required|exists:daily_routines,id',
+            'title' => 'required|string|max:255',
+        ]);
+
+        return $this->createChecklistForRoutine((int) $validated['routine_id'], $validated['title']);
+    }
+
+    public function checklistStore(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        return $this->createChecklistForRoutine($id, $validated['title']);
+    }
+
+    private function createChecklistForRoutine(int $routineId, string $title): JsonResponse
+    {
+        $routine = DailyRoutine::findOrFail($routineId);
+
+        $mapDays = [
+            'Sunday' => 'minggu',
+            'Monday' => 'senin',
+            'Tuesday' => 'selasa',
+            'Wednesday' => 'rabu',
+            'Thursday' => 'kamis',
+            'Friday' => 'jumat',
+            'Saturday' => 'sabtu',
+        ];
+
+        $checklist = DailyRoutineChecklist::create([
+            'daily_routine_id' => $routine->id,
+            'title' => trim($title),
+            'is_done' => false,
+            'day_name' => $mapDays[now()->format('l')] ?? null,
+        ]);
+
+        $this->syncRoutineStatus((int) $routine->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Checklist item berhasil ditambah.',
+            'data' => $checklist,
+        ]);
+    }
+
     // ─── Checklist: delete ─────────────────────────────────
 
     public function checklistDestroy(int $checklistId): JsonResponse

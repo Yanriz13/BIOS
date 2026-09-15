@@ -263,7 +263,7 @@
 
                                                 <div class="flex items-center gap-3">
 
-                                                    <img src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                                                    <img src="{{ asset('images/user-default.svg') }}"
                                                         alt="{{ $user->name }}"
                                                         class="h-11 w-11 rounded-2xl object-cover border border-slate-200">
 
@@ -437,7 +437,7 @@
                                             </td>
                                             <td class="px-5 py-4">
                                                 <div class="flex items-center gap-3">
-                                                    <img src="https://i.pravatar.cc/100?u={{ $user->id }}"
+                                                    <img src="{{ asset('images/user-default.svg') }}"
                                                         alt="{{ $user->name }}"
                                                         class="h-11 w-11 rounded-2xl object-cover border border-slate-200">
                                                     <div class="min-w-0">
