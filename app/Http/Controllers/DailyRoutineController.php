@@ -127,8 +127,13 @@ class DailyRoutineController extends Controller
 
         if ($user->role === 'admin_dept') {
             $routineQuery->whereHas('user', function ($q) use ($user) {
-                $q->where('divisi_id', $user->divisi_id)
-                    ->where('departemen_id', $user->departemen_id);
+                if ($user->departemen_id) {
+                    $q->where('departemen_id', $user->departemen_id);
+                } elseif ($user->divisi_id) {
+                    $q->where('divisi_id', $user->divisi_id);
+                } else {
+                    $q->where('divisi', $user->divisi);
+                }
             });
         }
 
@@ -152,8 +157,13 @@ class DailyRoutineController extends Controller
 
         $memberQuery = User::where('role', 'staff');
         if ($user->role === 'admin_dept') {
-            $memberQuery->where('divisi_id', $user->divisi_id)
-                ->where('departemen_id', $user->departemen_id);
+            if ($user->departemen_id) {
+                $memberQuery->where('departemen_id', $user->departemen_id);
+            } elseif ($user->divisi_id) {
+                $memberQuery->where('divisi_id', $user->divisi_id);
+            } else {
+                $memberQuery->where('divisi', $user->divisi);
+            }
         }
         $members = $memberQuery->get();
 
@@ -204,17 +214,18 @@ class DailyRoutineController extends Controller
 
         try {
 
-            $routine = DailyRoutine::create([
+            $routine = DailyRoutine::firstOrCreate([
                 'user_id' => $validated['user_id'] ?? null,
                 'created_by' => Auth::id(),
                 'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
                 'deadline' => $validated['deadline'] ?? null,
+            ], [
+                'description' => $validated['description'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'status' => 'pending',
             ]);
 
-            if (!empty($validated['checklists'])) {
+            if ($routine->wasRecentlyCreated && !empty($validated['checklists'])) {
                 foreach (array_filter($validated['checklists']) as $item) {
 
                     DailyRoutineChecklist::create([

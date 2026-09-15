@@ -1086,7 +1086,8 @@ $overdue = strtolower($routine->deadline) === $today
             const title = input.value.trim();
             if (!title) { input.focus(); return; }
             try {
-                const res = await fetch(`/project/daily-routine/${routineId}/checklist`, {
+                const checklistStoreUrl = @json(route('daily-routine.checklist.store', ['id' => '__ROUTINE_ID__']));
+                const res = await fetch(checklistStoreUrl.replace('__ROUTINE_ID__', routineId), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
                     body: JSON.stringify({ title }),

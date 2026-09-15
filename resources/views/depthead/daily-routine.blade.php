@@ -673,7 +673,8 @@ async function addChecklistItem(routineId, suffix) {
     const input = document.getElementById(inputId);
     const title = input?.value?.trim();
     if (!title) return;
-    const resp = await fetch(`/project/daily-routine/${routineId}/checklist`, {
+    const checklistStoreUrl = @json(route('daily-routine.checklist.store', ['id' => '__ROUTINE_ID__']));
+    const resp = await fetch(checklistStoreUrl.replace('__ROUTINE_ID__', routineId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
         body: JSON.stringify({ title }),

@@ -22,12 +22,7 @@ class HomeController extends Controller
         $employeeQuery   = User::where('role', 'staff');
 
         if (in_array($user->role, ['admin_dept', 'dept_head'])) {
-            if ($user->departemen_id && $user->divisi_id) {
-                $taskQuery->whereHas('assignments.user', fn($q) => $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id));
-                $assignmentQuery->whereHas('user', fn($q) => $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id));
-                $checklistQuery->whereHas('assignment.user', fn($q) => $q->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id));
-                $employeeQuery->where('departemen_id', $user->departemen_id)->where('divisi_id', $user->divisi_id);
-            } elseif ($user->departemen_id) {
+            if ($user->departemen_id) {
                 $taskQuery->whereHas('assignments.user', fn($q) => $q->where('departemen_id', $user->departemen_id));
                 $assignmentQuery->whereHas('user', fn($q) => $q->where('departemen_id', $user->departemen_id));
                 $checklistQuery->whereHas('assignment.user', fn($q) => $q->where('departemen_id', $user->departemen_id));
