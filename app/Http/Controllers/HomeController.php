@@ -26,12 +26,19 @@ class HomeController extends Controller
                 $taskQuery->whereHas('assignments.user', fn($q) => $q->where('departemen_id', $user->departemen_id));
                 $assignmentQuery->whereHas('user', fn($q) => $q->where('departemen_id', $user->departemen_id));
                 $checklistQuery->whereHas('assignment.user', fn($q) => $q->where('departemen_id', $user->departemen_id));
-                $employeeQuery->where('departemen_id', $user->departemen_id);
+                $employeeQuery->where(function ($q) use ($user) {
+                    $q->where('departemen_id', $user->departemen_id)
+                        ->orWhere('divisi_id', $user->divisi_id)
+                        ->orWhere('divisi', $user->divisi);
+                });
             } elseif ($user->divisi_id || $user->divisi) {
                 $taskQuery->where('divisi', $user->divisi);
                 $assignmentQuery->whereHas('task', fn($q) => $q->where('divisi', $user->divisi));
                 $checklistQuery->whereHas('assignment.task', fn($q) => $q->where('divisi', $user->divisi));
-                $employeeQuery->where('divisi', $user->divisi);
+                $employeeQuery->where(function ($q) use ($user) {
+                    $q->where('divisi_id', $user->divisi_id)
+                        ->orWhere('divisi', $user->divisi);
+                });
             }
             $scopeTitle = $user->departemen ? ('Departemen ' . $user->departemen) : ('Divisi ' . ($user->divisi ?? '-'));
         } elseif (in_array($user->role, ['direksi', 'gh', 'div_head', 'super_admin'])) {
@@ -149,7 +156,6 @@ class HomeController extends Controller
                 ->map(fn($assignment) => $resolveAssignmentStatus($assignment))
                 ->countBy()
                 ->toArray();
-
             $totalTasks      = $assignments->count();
             $doneTasks       = (int) ($statusCounts['done'] ?? 0);
             $progressTasks   = (int) ($statusCounts['progress'] ?? 0);

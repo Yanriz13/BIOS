@@ -164,7 +164,9 @@
                     $pct       = $project['progress'] ?? 0;
                     $total     = $project['total_task'] ?? 0;
                     $done      = $project['done_task'] ?? 0;
-                    $daysLeft  = \Carbon\Carbon::parse($project['deadline'])->diffInDays(now(), false);
+                    $daysLeft  = $project['deadline']
+                        ? \Carbon\Carbon::parse($project['deadline'])->diffInDays(now(), false)
+                        : 0;
                     $isLate    = $daysLeft > 0;
                     $label     = $pct >= 100 ? 'done' : 'progress';
                     $barColor  = $pct >= 100 ? 'bg-emerald-500' : ($isLate ? 'bg-red-500' : 'bg-blue-500');
@@ -189,7 +191,7 @@
                             </div>
                         </div>
                         <div class="mt-4 flex items-center justify-between text-xs text-slate-500">
-                            <span>Deadline: <strong class="text-slate-700">{{ \Carbon\Carbon::parse($project['deadline'])->format('d M Y') }}</strong></span>
+                            <span>Deadline: <strong class="text-slate-700">{{ $project['deadline'] ? \Carbon\Carbon::parse($project['deadline'])->format('d M Y') : '-' }}</strong></span>
                             <span>{{ $done }} / {{ $total }} task</span>
                         </div>
                         <div class="mt-2 h-2.5 rounded-full bg-slate-200 overflow-hidden">

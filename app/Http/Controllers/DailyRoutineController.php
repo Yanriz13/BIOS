@@ -45,6 +45,7 @@ class DailyRoutineController extends Controller
         */
 
         $user = auth()->user();
+        $canManageRoutines = in_array($user->role, ['admin_dept', 'div_head', 'dept_head'], true);
 
         /*
         |--------------------------------------------------------------------------
@@ -83,24 +84,39 @@ class DailyRoutineController extends Controller
             $members = User::where('role', 'staff')
                 ->where(function ($q) use ($user) {
                     if ($user->departemen_id) {
-                        $q->where('departemen_id', $user->departemen_id);
+                        $q->where('departemen_id', $user->departemen_id)
+                            ->orWhere('divisi_id', $user->divisi_id)
+                            ->orWhere('divisi', $user->divisi);
                     } else {
-                        $q->where('supervisor_id', $user->id)->orWhere('divisi', $user->divisi);
+                        $q->where('supervisor_id', $user->id)
+                            ->orWhere('divisi_id', $user->divisi_id)
+                            ->orWhere('divisi', $user->divisi);
                     }
                 })
+                ->distinct()
                 ->get();
 
             $allRoutines = DailyRoutine::with(['user', 'checklists', 'task'])
                 ->whereHas('user', function ($q) use ($user) {
                     if ($user->departemen_id) {
-                        $q->where('departemen_id', $user->departemen_id);
+                        $q->where('departemen_id', $user->departemen_id)
+                            ->orWhere('divisi_id', $user->divisi_id)
+                            ->orWhere('divisi', $user->divisi);
                     } else {
-                        $q->where('supervisor_id', $user->id)->orWhere('divisi', $user->divisi);
+                        $q->where('supervisor_id', $user->id)
+                            ->orWhere('divisi_id', $user->divisi_id)
+                            ->orWhere('divisi', $user->divisi);
                     }
                 })
                 ->latest()
                 ->get()
-                ->filter(function ($routine) use ($today) {
+                ->unique(fn ($routine) => $routine->user_id . '|' . $routine->title . '|' . $routine->deadline)
+                ->values()
+                ->filter(function ($routine) use ($today, $canManageRoutines) {
+                    if ($canManageRoutines) {
+                        return true;
+                    }
+
                     if (!$routine->deadline)
                         return false;
                     $days = collect(explode(',', strtolower($routine->deadline)))
@@ -128,9 +144,14 @@ class DailyRoutineController extends Controller
         if ($user->role === 'admin_dept') {
             $routineQuery->whereHas('user', function ($q) use ($user) {
                 if ($user->departemen_id) {
-                    $q->where('departemen_id', $user->departemen_id);
+                    $q->where(function ($q) use ($user) {
+                        $q->where('departemen_id', $user->departemen_id)
+                            ->orWhere('divisi_id', $user->divisi_id)
+                            ->orWhere('divisi', $user->divisi);
+                    });
                 } elseif ($user->divisi_id) {
-                    $q->where('divisi_id', $user->divisi_id);
+                    $q->where('divisi_id', $user->divisi_id)
+                        ->orWhere('divisi', $user->divisi);
                 } else {
                     $q->where('divisi', $user->divisi);
                 }
@@ -139,7 +160,12 @@ class DailyRoutineController extends Controller
 
         $routines = $routineQuery->latest()
             ->get()
-            ->filter(function ($routine) use ($today) {
+            ->unique(fn ($routine) => $routine->user_id . '|' . $routine->title . '|' . $routine->deadline)
+            ->values()
+            ->filter(function ($routine) use ($today, $canManageRoutines) {
+                if ($canManageRoutines) {
+                    return true;
+                }
 
                 if (!$routine->deadline) {
                     return false;
@@ -160,12 +186,15 @@ class DailyRoutineController extends Controller
             if ($user->departemen_id) {
                 $memberQuery->where('departemen_id', $user->departemen_id);
             } elseif ($user->divisi_id) {
-                $memberQuery->where('divisi_id', $user->divisi_id);
+                $memberQuery->where(function ($q) use ($user) {
+                    $q->where('divisi_id', $user->divisi_id)
+                        ->orWhere('divisi', $user->divisi);
+                });
             } else {
                 $memberQuery->where('divisi', $user->divisi);
             }
         }
-        $members = $memberQuery->get();
+        $members = $memberQuery->distinct()->get();
 
         return view('daily-routine.index', compact(
             'routines',
@@ -216,10 +245,10 @@ class DailyRoutineController extends Controller
 
             $routine = DailyRoutine::firstOrCreate([
                 'user_id' => $validated['user_id'] ?? null,
-                'created_by' => Auth::id(),
                 'title' => $validated['title'],
                 'deadline' => $validated['deadline'] ?? null,
             ], [
+                'created_by' => Auth::id(),
                 'description' => $validated['description'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'status' => 'pending',
